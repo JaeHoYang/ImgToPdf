@@ -1,0 +1,32 @@
+# Visual Studio 빌드 산출물
+x64/
+Debug/
+Release/
+*.aps
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.db
+*.opendb
+ipch/
+.vs/
+
+# Inno Setup 출력
+installer/Output/
+installer/*.exe
+installer/*.zip
+
+# Claude Code
+.claude/
+
+# 내부 개발 문서
+research.md
+plan.md
+prd.html
+
+# 기타
+*.pch
+*.iobj
+*.ipdb
+Thumbs.db
