@@ -264,31 +264,46 @@ ollama pull llama3.2:3b
 
 ```
 ImgToPdf/
-├── ImgToPdf.sln / .vcxproj
-├── AppMessages.h               ← 커스텀 WM_USER 메시지 상수
-├── resource.h                  ← 컨트롤 ID, 다이얼로그 ID
-├── ImgToPdf.rc                 ← 다이얼로그 템플릿
-├── pch.h / pch.cpp             ← 프리컴파일드 헤더
+├── ImgToPdf.sln
+├── ImgToPdf.vcxproj
+├── ImgToPdf.vcxproj.filters    ← Solution Explorer 폴더 구조 정의
 │
-├── AppLang.h / .cpp            ← 런타임 언어 전환 (LS, BuildFilter)
-├── TabDlgBase.h                ← 탭 공통 인터페이스
+├── [App Entry]
+│   ├── ImgToPdf.h / .cpp       ← 앱 진입점, GDI+ 초기화
+│   ├── pch.h / .cpp            ← 프리컴파일드 헤더
+│   └── targetver.h
 │
-├── ImgToPdf.h / .cpp           ← 앱 진입점, GDI+ 초기화
-├── ImgToPdfDlg.h / .cpp        ← 메인 다이얼로그 (탭 컨테이너)
+├── [Main Dialog]
+│   ├── ImgToPdfDlg.h / .cpp    ← 메인 다이얼로그 (탭 컨테이너)
+│   └── TabDlgBase.h            ← 탭 공통 인터페이스
 │
-├── ImgConvertDlg.h / .cpp      ← 탭1: 이미지 ↔ PDF 변환
-├── PdfToolsDlg.h / .cpp        ← 탭2: PDF 나누기·합치기·추출·AI 요약
-├── MdConvertDlg.h / .cpp       ← 탭3: Markdown → HTML/PDF
-├── WordConvertDlg.h / .cpp     ← 탭4: Word → PDF (Word/LibreOffice COM)
-├── PptConvertDlg.h / .cpp      ← 탭5: PPT → PDF (PowerPoint/LibreOffice)
+├── [Tab Dialogs]
+│   ├── ImgConvertDlg.h / .cpp  ← 탭1: 이미지 ↔ PDF 변환
+│   ├── PdfToolsDlg.h / .cpp    ← 탭2: PDF 나누기·합치기·추출·AI 요약
+│   ├── MdConvertDlg.h / .cpp   ← 탭3: Markdown → HTML/PDF
+│   ├── WordConvertDlg.h / .cpp ← 탭4: Word → PDF (Word/LibreOffice COM)
+│   └── PptConvertDlg.h / .cpp  ← 탭5: PPT → PDF (PowerPoint/LibreOffice)
 │
-├── FileListCtrl.h / .cpp       ← 커스텀 CListCtrl (상태 아이콘·행 배경색)
-├── ImagePreviewCtrl.h / .cpp   ← GDI+ 이미지 미리보기
-├── ProgressLabel.h / .cpp      ← 3색 카운터 레이블
-├── ConvertWorker.h / .cpp      ← 이미지 변환 스레드 풀
-├── PdfWriter.h / .cpp          ← PDF 1.4 스트림 생성
-├── PdfConverter.h / .cpp       ← WinRT PDF 읽기·JPG 렌더링
-├── MdConverter.h / .cpp        ← Markdown → RTF/HTML 변환
+├── [Conversion Engine]
+│   ├── ConvertWorker.h / .cpp  ← 이미지 변환 스레드 풀
+│   ├── PdfWriter.h / .cpp      ← PDF 1.4 스트림 생성
+│   ├── PdfConverter.h / .cpp   ← WinRT PDF 읽기·JPG 렌더링
+│   └── MdConverter.h / .cpp    ← Markdown → RTF/HTML 변환
+│
+├── [UI Controls]
+│   ├── FileListCtrl.h / .cpp   ← 커스텀 CListCtrl (상태 아이콘·행 배경색)
+│   ├── ImagePreviewCtrl.h / .cpp ← GDI+ 이미지 미리보기
+│   ├── ProgressLabel.cpp       ← 3색 카운터 레이블
+│   └── ColorButton.h           ← 커스텀 색상 버튼
+│
+├── [Language & Messages]
+│   ├── AppLang.h / .cpp        ← 런타임 언어 전환 (LS, BuildFilter)
+│   ├── AppMessages.h           ← 커스텀 WM_USER 메시지 상수
+│   └── resource.h              ← 컨트롤 ID, 다이얼로그 ID
+│
+├── [Resources]
+│   ├── ImgToPdf.rc             ← 다이얼로그 템플릿
+│   └── ImgToPdf.ico
 │
 ├── installer/
 │   └── ImgToPdf_setup.iss      ← Inno Setup 설치 스크립트

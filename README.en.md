@@ -265,31 +265,46 @@ Click `─` (system menu, top-left) → **Switch to English** → switches insta
 
 ```
 ImgToPdf/
-├── ImgToPdf.sln / .vcxproj
-├── AppMessages.h               ← Custom WM_USER message constants
-├── resource.h                  ← Control IDs, dialog IDs
-├── ImgToPdf.rc                 ← Dialog templates
-├── pch.h / pch.cpp             ← Precompiled header
+├── ImgToPdf.sln
+├── ImgToPdf.vcxproj
+├── ImgToPdf.vcxproj.filters    ← Solution Explorer folder structure
 │
-├── AppLang.h / .cpp            ← Runtime language switching (LS, BuildFilter)
-├── TabDlgBase.h                ← Common tab interface
+├── [App Entry]
+│   ├── ImgToPdf.h / .cpp       ← App entry point, GDI+ initialization
+│   ├── pch.h / .cpp            ← Precompiled header
+│   └── targetver.h
 │
-├── ImgToPdf.h / .cpp           ← App entry point, GDI+ initialization
-├── ImgToPdfDlg.h / .cpp        ← Main dialog (tab container)
+├── [Main Dialog]
+│   ├── ImgToPdfDlg.h / .cpp    ← Main dialog (tab container)
+│   └── TabDlgBase.h            ← Common tab interface
 │
-├── ImgConvertDlg.h / .cpp      ← Tab 1: Image ↔ PDF
-├── PdfToolsDlg.h / .cpp        ← Tab 2: PDF split/merge/extract + AI summary
-├── MdConvertDlg.h / .cpp       ← Tab 3: Markdown → HTML/PDF
-├── WordConvertDlg.h / .cpp     ← Tab 4: Word → PDF (Word/LibreOffice COM)
-├── PptConvertDlg.h / .cpp      ← Tab 5: PPT → PDF (PowerPoint/LibreOffice)
+├── [Tab Dialogs]
+│   ├── ImgConvertDlg.h / .cpp  ← Tab 1: Image ↔ PDF
+│   ├── PdfToolsDlg.h / .cpp    ← Tab 2: PDF split/merge/extract + AI summary
+│   ├── MdConvertDlg.h / .cpp   ← Tab 3: Markdown → HTML/PDF
+│   ├── WordConvertDlg.h / .cpp ← Tab 4: Word → PDF (Word/LibreOffice COM)
+│   └── PptConvertDlg.h / .cpp  ← Tab 5: PPT → PDF (PowerPoint/LibreOffice)
 │
-├── FileListCtrl.h / .cpp       ← Custom CListCtrl (status icons, row colors)
-├── ImagePreviewCtrl.h / .cpp   ← GDI+ image preview
-├── ProgressLabel.h / .cpp      ← 3-color counter label
-├── ConvertWorker.h / .cpp      ← Image conversion thread pool
-├── PdfWriter.h / .cpp          ← PDF 1.4 stream writer
-├── PdfConverter.h / .cpp       ← WinRT PDF reader / JPG renderer
-├── MdConverter.h / .cpp        ← Markdown → RTF/HTML converter
+├── [Conversion Engine]
+│   ├── ConvertWorker.h / .cpp  ← Image conversion thread pool
+│   ├── PdfWriter.h / .cpp      ← PDF 1.4 stream writer
+│   ├── PdfConverter.h / .cpp   ← WinRT PDF reader / JPG renderer
+│   └── MdConverter.h / .cpp    ← Markdown → RTF/HTML converter
+│
+├── [UI Controls]
+│   ├── FileListCtrl.h / .cpp   ← Custom CListCtrl (status icons, row colors)
+│   ├── ImagePreviewCtrl.h / .cpp ← GDI+ image preview
+│   ├── ProgressLabel.cpp       ← 3-color counter label
+│   └── ColorButton.h           ← Custom color button
+│
+├── [Language & Messages]
+│   ├── AppLang.h / .cpp        ← Runtime language switching (LS, BuildFilter)
+│   ├── AppMessages.h           ← Custom WM_USER message constants
+│   └── resource.h              ← Control IDs, dialog IDs
+│
+├── [Resources]
+│   ├── ImgToPdf.rc             ← Dialog templates
+│   └── ImgToPdf.ico
 │
 ├── installer/
 │   └── ImgToPdf_setup.iss      ← Inno Setup script
