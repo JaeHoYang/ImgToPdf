@@ -19,7 +19,7 @@ Tab 2 includes **local AI summarization via Ollama** — no internet connection 
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────┐
-│  ImgToPdf v2.1                                                      [─][□][✕]     │
+│  ImgToPdf v2.3                                                      [─][□][✕]     │
 ├────────────────────────────────────────────────────────────────────────────────────┤
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  [◀] [▶]  │
 │  │  Image   │  │   PDF    │  │   MD     │  │   Word   │  │   PPT    │            │
@@ -122,7 +122,7 @@ Tab 2 includes **local AI summarization via Ollama** — no internet connection 
 
 ### Installer (recommended)
 
-1. Download `ImgToPdf_Setup_v2.1.exe` from the [Releases](https://github.com/JaeHoYang/ImgToPdf/releases) page
+1. Download `ImgToPdf_Setup_v2.3.exe` from the [Releases](https://github.com/JaeHoYang/ImgToPdf/releases) page
 2. Run the installer and follow the wizard
 3. On the **App Language** step, select `한국어 (Korean)` or `English`
 4. After installation, confirm whether to **auto-install Ollama** → downloads and installs automatically if agreed
@@ -144,7 +144,7 @@ Or open `ImgToPdf.sln` in Visual Studio 2022 and build with `Release | x64`.
 1. Install [Inno Setup 6.x](https://jrsoftware.org/isdl.php)
 2. Confirm `Release x64` build is complete
 3. Open `installer\ImgToPdf_setup.iss` in Inno Setup Compiler → press **F9**
-4. Output: `installer\ImgToPdf_Setup_v2.1.exe`
+4. Output: `installer\ImgToPdf_Setup_v2.3.exe`
 
 > If `mfc142u.dll`, `msvcp140.dll`, `vcruntime140.dll`, and `vcruntime140_1.dll` are present in `x64\Release`, they are bundled automatically.
 
