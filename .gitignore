@@ -28,6 +28,8 @@ session_questions.md
 report.md
 report_summary.md
 report_detail.md
+report_mid.md
+report_*.md
 
 # 기타
 *.pch
