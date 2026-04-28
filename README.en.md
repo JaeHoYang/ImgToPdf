@@ -1,6 +1,6 @@
 # ImgToPdf
 
-> Multi-function file conversion desktop app for Windows — Image ↔ PDF · PDF Tools · Markdown Conversion
+> Multi-function file conversion desktop app for Windows — Image ↔ PDF · PDF Tools · Markdown · Word · PPT Conversion
 
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-blue)](https://www.microsoft.com/windows)
 [![Language](https://img.shields.io/badge/language-C%2B%2B17%20%2F%20MFC-orange)](https://docs.microsoft.com/cpp)
@@ -14,22 +14,23 @@
 ## Overview
 
 ImgToPdf is a file conversion tool that runs entirely on built-in Windows 10 APIs — no external libraries required.  
-Three tabs handle image, PDF, and Markdown conversions in a single window, with runtime Korean/English language switching.  
+Five tabs handle image, PDF, Markdown, Word, and PPT conversions in a single window, with runtime Korean/English language switching.  
 Tab 2 includes **local AI summarization via Ollama** — no internet connection or API key needed.
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│  ImgToPdf v2.0                                          [─][□][✕]   │
-├──────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  [◀] [▶]     │
-│  │ Image Convert│  │  PDF Tools   │  │  MD Convert  │              │
-│  └──────────────┘  └──────────────┘  └──────────────┘              │
-│ ┌──────────────────────────────────────────────────────────────────┐ │
-│ │                   Active tab child dialog area                   │ │
-│ └──────────────────────────────────────────────────────────────────┘ │
-│  Path: [___________________________________]  [Browse]  [Convert]    │
-│  [██████████░░░░░]  (3 / 1 / 10)  [▲] [▼] [Delete]                  │
-└──────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│  ImgToPdf v2.1                                                      [─][□][✕]     │
+├────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  [◀] [▶]  │
+│  │  Image   │  │   PDF    │  │   MD     │  │   Word   │  │   PPT    │            │
+│  │ Convert  │  │  Tools   │  │ Convert  │  │ Convert  │  │ Convert  │            │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘            │
+│ ┌──────────────────────────────────────────────────────────────────────────────┐   │
+│ │                        Active tab child dialog area                          │   │
+│ └──────────────────────────────────────────────────────────────────────────────┘   │
+│  Path: [___________________________________]  [Browse]  [Convert]                  │
+│  [██████████░░░░░]  (3 / 1 / 10)  [▲] [▼] [Delete]                                │
+└────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ![Screenshot](imgtopdf.png)
@@ -70,6 +71,28 @@ Tab 2 includes **local AI summarization via Ollama** — no internet connection 
 | PDF | Markdown → PDF (RTF rendering → A4 page layout) |
 | HTML + PDF | Generate both HTML and PDF simultaneously |
 | Preview | Click a list item to see a converted preview in RichEdit |
+
+### Tab 4 — Word Convert
+
+| Feature | Description |
+|---------|-------------|
+| Word → PDF | Convert `.doc` / `.docx` → PDF |
+| Auto engine detection | Registry scan for Word then LibreOffice; uses whichever is installed |
+| Microsoft Word | COM IDispatch: `Presentations.Open` → `SaveAs(PDF)` → `Close` |
+| LibreOffice | Runs `soffice.exe --headless --convert-to pdf` as a subprocess |
+| Drag & Drop | Drop files directly onto the list |
+| Preview | Shell thumbnail or file icon shown on selection |
+
+### Tab 5 — PPT Convert
+
+| Feature | Description |
+|---------|-------------|
+| PPT → PDF | Convert `.ppt` / `.pptx` → PDF |
+| Auto engine detection | Registry scan for PowerPoint then LibreOffice |
+| Microsoft PowerPoint | COM IDispatch: `SaveAs(ppSaveAsPDF=32)`; preserves original slide dimensions |
+| LibreOffice | Runs `soffice.exe --headless --convert-to pdf` as a subprocess |
+| Drag & Drop | Drop files directly onto the list |
+| Preview | Shell thumbnail or file icon shown on selection |
 
 ### Common Features
 
@@ -184,6 +207,22 @@ ollama pull llama3.2:3b
 3. *(Optional)* Specify output folder (leave blank to save beside source)
 4. Click **[Convert]**
 
+### Word Convert (Tab 4)
+
+> Microsoft Word or LibreOffice must be installed.
+
+1. Drag & drop `.doc` / `.docx` files or click **[Browse]** to add them
+2. *(Optional)* Specify output folder (leave blank to save beside source)
+3. Click **[Convert]** → PDF saved
+
+### PPT Convert (Tab 5)
+
+> Microsoft PowerPoint or LibreOffice must be installed.
+
+1. Drag & drop `.ppt` / `.pptx` files or click **[Browse]** to add them
+2. *(Optional)* Specify output folder (leave blank to save beside source)
+3. Click **[Convert]** → PDF saved
+
 ### Language Switch
 
 Click `─` (system menu, top-left) → **Switch to English** → switches instantly (no restart)
@@ -239,8 +278,10 @@ ImgToPdf/
 ├── ImgToPdfDlg.h / .cpp        ← Main dialog (tab container)
 │
 ├── ImgConvertDlg.h / .cpp      ← Tab 1: Image ↔ PDF
-├── PdfToolsDlg.h / .cpp        ← Tab 2: PDF split/merge/extract
+├── PdfToolsDlg.h / .cpp        ← Tab 2: PDF split/merge/extract + AI summary
 ├── MdConvertDlg.h / .cpp       ← Tab 3: Markdown → HTML/PDF
+├── WordConvertDlg.h / .cpp     ← Tab 4: Word → PDF (Word/LibreOffice COM)
+├── PptConvertDlg.h / .cpp      ← Tab 5: PPT → PDF (PowerPoint/LibreOffice)
 │
 ├── FileListCtrl.h / .cpp       ← Custom CListCtrl (status icons, row colors)
 ├── ImagePreviewCtrl.h / .cpp   ← GDI+ image preview
@@ -268,6 +309,8 @@ ImgToPdf/
 | Image | `.jpg` `.jpeg` `.png` `.bmp` `.tiff` `.tif` `.gif` |
 | PDF | `.pdf` |
 | Markdown | `.md` `.markdown` |
+| Word | `.doc` `.docx` |
+| PowerPoint | `.ppt` `.pptx` |
 
 ### Output
 
@@ -282,6 +325,8 @@ ImgToPdf/
 | PDF extract (single) | `filename_extracted.pdf` |
 | Markdown → HTML | `filename.html` |
 | Markdown → PDF | `filename.pdf` |
+| Word → PDF | `filename.pdf` |
+| PPT → PDF | `filename.pdf` |
 
 ---
 
