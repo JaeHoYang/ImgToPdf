@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- ── Filter Declarations ── -->
+  <ItemGroup>
+    <Filter Include="App Entry">
+      <UniqueIdentifier>{A1B2C3D4-E5F6-7890-ABCD-EF1234567801}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Dialog">
+      <UniqueIdentifier>{B2C3D4E5-F6A7-8901-BCDE-F12345678902}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tab Dialogs">
+      <UniqueIdentifier>{C3D4E5F6-A7B8-9012-CDEF-123456789003}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tab Dialogs\Tab1 - Image Convert">
+      <UniqueIdentifier>{D4E5F6A7-B8C9-0123-DEF0-234567890104}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tab Dialogs\Tab2 - PDF Tools">
+      <UniqueIdentifier>{E5F6A7B8-C9D0-1234-EF01-345678901205}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tab Dialogs\Tab3 - MD Convert">
+      <UniqueIdentifier>{F6A7B8C9-D0E1-2345-F012-456789012306}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tab Dialogs\Tab4 - Word Convert">
+      <UniqueIdentifier>{A7B8C9D0-E1F2-3456-0123-567890123407}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tab Dialogs\Tab5 - PPT Convert">
+      <UniqueIdentifier>{B8C9D0E1-F2A3-4567-1234-678901234508}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Conversion Engine">
+      <UniqueIdentifier>{C9D0E1F2-A3B4-5678-2345-789012345609}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI Controls">
+      <UniqueIdentifier>{D0E1F2A3-B4C5-6789-3456-89012345670A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Language &amp; Messages">
+      <UniqueIdentifier>{E1F2A3B4-C5D6-7890-4567-90123456780B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{F2A3B4C5-D6E7-8901-5678-01234567890C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Third Party">
+      <UniqueIdentifier>{A3B4C5D6-E7F8-9012-6789-12345678900D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+
+  <!-- ── Source Files (.cpp) ── -->
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>App Entry</Filter>
+    </ClCompile>
+    <ClCompile Include="ImgToPdf.cpp">
+      <Filter>App Entry</Filter>
+    </ClCompile>
+    <ClCompile Include="ImgToPdfDlg.cpp">
+      <Filter>Main Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="ImgConvertDlg.cpp">
+      <Filter>Tab Dialogs\Tab1 - Image Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="PdfToolsDlg.cpp">
+      <Filter>Tab Dialogs\Tab2 - PDF Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="MdConvertDlg.cpp">
+      <Filter>Tab Dialogs\Tab3 - MD Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="WordConvertDlg.cpp">
+      <Filter>Tab Dialogs\Tab4 - Word Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="PptConvertDlg.cpp">
+      <Filter>Tab Dialogs\Tab5 - PPT Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="ConvertWorker.cpp">
+      <Filter>Conversion Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="PdfWriter.cpp">
+      <Filter>Conversion Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="PdfConverter.cpp">
+      <Filter>Conversion Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="MdConverter.cpp">
+      <Filter>Conversion Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="FileListCtrl.cpp">
+      <Filter>UI Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="ImagePreviewCtrl.cpp">
+      <Filter>UI Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="ProgressLabel.cpp">
+      <Filter>UI Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="AppLang.cpp">
+      <Filter>Language &amp; Messages</Filter>
+    </ClCompile>
+  </ItemGroup>
+
+  <!-- ── Header Files (.h) ── -->
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>App Entry</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>App Entry</Filter>
+    </ClInclude>
+    <ClInclude Include="ImgToPdf.h">
+      <Filter>App Entry</Filter>
+    </ClInclude>
+    <ClInclude Include="ImgToPdfDlg.h">
+      <Filter>Main Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="TabDlgBase.h">
+      <Filter>Main Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="ImgConvertDlg.h">
+      <Filter>Tab Dialogs\Tab1 - Image Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="PdfToolsDlg.h">
+      <Filter>Tab Dialogs\Tab2 - PDF Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="MdConvertDlg.h">
+      <Filter>Tab Dialogs\Tab3 - MD Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="WordConvertDlg.h">
+      <Filter>Tab Dialogs\Tab4 - Word Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="PptConvertDlg.h">
+      <Filter>Tab Dialogs\Tab5 - PPT Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="ConvertWorker.h">
+      <Filter>Conversion Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="PdfWriter.h">
+      <Filter>Conversion Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="PdfConverter.h">
+      <Filter>Conversion Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="MdConverter.h">
+      <Filter>Conversion Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="FileListCtrl.h">
+      <Filter>UI Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="ImagePreviewCtrl.h">
+      <Filter>UI Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorButton.h">
+      <Filter>UI Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="AppLang.h">
+      <Filter>Language &amp; Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="AppMessages.h">
+      <Filter>Language &amp; Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Language &amp; Messages</Filter>
+    </ClInclude>
+  </ItemGroup>
+
+  <!-- ── Resource Files ── -->
+  <ItemGroup>
+    <ResourceCompile Include="ImgToPdf.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Image Include="ImgToPdf.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+
+  <!-- ── Third Party ── -->
+  <ItemGroup>
+    <None Include="third_party\stb_image.h">
+      <Filter>Third Party</Filter>
+    </None>
+  </ItemGroup>
+
+</Project>
