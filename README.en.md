@@ -122,7 +122,7 @@ Tab 2 includes **local AI summarization via Ollama** — no internet connection 
 
 ### Installer (recommended)
 
-1. Download `ImgToPdf_Setup_v2.1.exe` from the [Releases](../../releases) page
+1. Download `ImgToPdf_Setup_v2.1.exe` from the [Releases](https://github.com/JaeHoYang/ImgToPdf/releases) page
 2. Run the installer and follow the wizard
 3. On the **App Language** step, select `한국어 (Korean)` or `English`
 4. After installation, confirm whether to **auto-install Ollama** → downloads and installs automatically if agreed
