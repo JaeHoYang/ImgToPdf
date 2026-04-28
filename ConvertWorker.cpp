@@ -63,13 +63,15 @@ void ConvertWorker::RunIndividual(const ConvertTask& task,
             ::PostMessage(task.hNotify, WM_CONVERT_PROGRESS,
                           (WPARAM)idx, (LPARAM)ConvertStatus::Running);
 
-            CString dir = e->srcPath.Left(e->srcPath.ReverseFind(_T('\\')));
+            CString dir = task.outDir.IsEmpty()
+                ? e->srcPath.Left(e->srcPath.ReverseFind(_T('\\')))
+                : task.outDir;
             CString dst = dir + _T("\\") + e->pdfName;
 
             CString errMsg;
             bool ok = false;
             if (e->type == FileEntry::Type::Image)
-                ok = PdfWriter::WriteSingle(e->srcPath, dst, errMsg);
+                ok = PdfWriter::WriteSingle(e->srcPath, dst, errMsg, task.jpegQuality);
             else  // PdfPage
                 ok = PdfConverter::RenderPageToJpg(
                          e->srcPath, e->pageIndex, dst, errMsg);
@@ -137,7 +139,7 @@ void ConvertWorker::RunMerge(const ConvertTask& task,
                           (WPARAM)idx, (LPARAM)ConvertStatus::Running);
 
             CString err;
-            loadOk[idx]  = PdfWriter::LoadImage(e->srcPath, images[idx], err);
+            loadOk[idx]  = PdfWriter::LoadImage(e->srcPath, images[idx], err, task.jpegQuality);
             loadErr[idx] = err;
         }
     };
@@ -175,7 +177,9 @@ void ConvertWorker::RunMerge(const ConvertTask& task,
 
     // Phase 2: 단일 스레드 PDF 쓰기
     CString firstPath = task.entries[0]->srcPath;
-    CString dir       = firstPath.Left(firstPath.ReverseFind(_T('\\')));
+    CString dir       = task.outDir.IsEmpty()
+        ? firstPath.Left(firstPath.ReverseFind(_T('\\')))
+        : task.outDir;
     CString dstPath   = dir + _T("\\") + task.entries[0]->pdfName;
 
     CString errMsg;

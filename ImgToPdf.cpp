@@ -18,11 +18,16 @@ CImgToPdfApp::CImgToPdfApp()
 
 BOOL CImgToPdfApp::InitInstance()
 {
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
     CWinApp::InitInstance();
+    SetRegistryKey(_T("jaeho"));
 
     // GDI+ 초기화
     Gdiplus::GdiplusStartupInput gdiplusInput;
     Gdiplus::GdiplusStartup(&m_gdiplusToken, &gdiplusInput, nullptr);
+
+    AfxInitRichEdit2(); // MD 미리보기용 RichEdit 5.0 (MSFTEDIT.DLL)
 
     {
         CImgToPdfDlg dlg;
@@ -32,5 +37,6 @@ BOOL CImgToPdfApp::InitInstance()
 
     Gdiplus::GdiplusShutdown(m_gdiplusToken);
 
+    CoUninitialize();
     return FALSE;
 }

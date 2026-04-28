@@ -4,8 +4,6 @@ VisualStudioVersion = 17.0.0.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImgToPdf", "ImgToPdf.vcxproj", "{4A8F3B2C-1D5E-4F6A-9B0C-D7E8F1234567}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ImgToPdfSetup", "..\ImgToPdfSetup\ImgToPdfSetup.vdproj", "{2B908088-3016-58D5-18F5-948EDD066E8B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -16,8 +14,6 @@ Global
 		{4A8F3B2C-1D5E-4F6A-9B0C-D7E8F1234567}.Debug|x64.Build.0 = Debug|x64
 		{4A8F3B2C-1D5E-4F6A-9B0C-D7E8F1234567}.Release|x64.ActiveCfg = Release|x64
 		{4A8F3B2C-1D5E-4F6A-9B0C-D7E8F1234567}.Release|x64.Build.0 = Release|x64
-		{2B908088-3016-58D5-18F5-948EDD066E8B}.Debug|x64.ActiveCfg = Debug
-		{2B908088-3016-58D5-18F5-948EDD066E8B}.Release|x64.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

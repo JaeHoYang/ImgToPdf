@@ -29,7 +29,7 @@ void CProgressLabel::OnPaint()
     CRect rc;
     GetClientRect(&rc);
 
-    dc.FillSolidRect(&rc, ::GetSysColor(COLOR_BTNFACE));
+    dc.FillSolidRect(&rc, RGB(248, 249, 252));
     dc.SetBkMode(TRANSPARENT);
 
     CFont* pOldFont = dc.SelectObject(GetFont());

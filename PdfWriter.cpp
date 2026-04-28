@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "PdfWriter.h"
+#include <objbase.h>
 
 // stb_image: 헤더 온리 라이브러리, 이 파일에서만 구현부 포함
 #define STB_IMAGE_IMPLEMENTATION
@@ -24,9 +25,69 @@ static bool IsJpeg(const CString& path)
     return (ext == _T(".jpg") || ext == _T(".jpeg"));
 }
 
+// GDI+ JPEG 인코더 CLSID 조회
+static bool GetJpegEncoderClsid(CLSID& clsid)
+{
+    UINT num = 0, size = 0;
+    Gdiplus::GetImageEncodersSize(&num, &size);
+    if (size == 0) return false;
+    std::vector<BYTE> buf(size);
+    auto* codecs = reinterpret_cast<Gdiplus::ImageCodecInfo*>(buf.data());
+    Gdiplus::GetImageEncoders(num, size, codecs);
+    for (UINT i = 0; i < num; ++i)
+        if (wcscmp(codecs[i].MimeType, L"image/jpeg") == 0) { clsid = codecs[i].Clsid; return true; }
+    return false;
+}
+
+// stb_image RGB 픽셀 → GDI+ JPEG 바이트 (quality: 10~100)
+static bool EncodeToJpeg(int w, int h, const uint8_t* rgb, int quality,
+                         std::vector<uint8_t>& outBytes)
+{
+    // GDI+ 24bppRGB은 BGR 순서이므로 채널 스왑
+    std::vector<uint8_t> bgr((size_t)w * h * 3);
+    for (int i = 0; i < w * h; ++i)
+    {
+        bgr[i * 3 + 0] = rgb[i * 3 + 2];
+        bgr[i * 3 + 1] = rgb[i * 3 + 1];
+        bgr[i * 3 + 2] = rgb[i * 3 + 0];
+    }
+
+    Gdiplus::Bitmap bmp(w, h, w * 3, PixelFormat24bppRGB, bgr.data());
+    if (bmp.GetLastStatus() != Gdiplus::Ok) return false;
+
+    CLSID jpegClsid;
+    if (!GetJpegEncoderClsid(jpegClsid)) return false;
+
+    Gdiplus::EncoderParameters params;
+    params.Count = 1;
+    params.Parameter[0].Guid           = Gdiplus::EncoderQuality;
+    params.Parameter[0].Type           = Gdiplus::EncoderParameterValueTypeLong;
+    params.Parameter[0].NumberOfValues = 1;
+    ULONG q = static_cast<ULONG>(quality);
+    params.Parameter[0].Value          = &q;
+
+    IStream* pStream = nullptr;
+    if (FAILED(CreateStreamOnHGlobal(nullptr, TRUE, &pStream))) return false;
+
+    Gdiplus::Status st = bmp.Save(pStream, &jpegClsid, &params);
+    if (st == Gdiplus::Ok)
+    {
+        LARGE_INTEGER liZero = {};
+        ULARGE_INTEGER uliSize = {};
+        pStream->Seek(liZero, STREAM_SEEK_END, &uliSize);
+        pStream->Seek(liZero, STREAM_SEEK_SET, nullptr);
+        outBytes.resize(static_cast<size_t>(uliSize.QuadPart));
+        ULONG nRead = 0;
+        pStream->Read(outBytes.data(), static_cast<ULONG>(uliSize.QuadPart), &nRead);
+        outBytes.resize(nRead);
+    }
+    pStream->Release();
+    return st == Gdiplus::Ok;
+}
+
 // ── 이미지 로딩 ──────────────────────────────────────────────
 
-bool PdfWriter::LoadImage(const CString& path, ImageData& out, CString& outError)
+bool PdfWriter::LoadImage(const CString& path, ImageData& out, CString& outError, int quality)
 {
     std::string utf8 = WideToUtf8(path);
     int w, h, ch;
@@ -49,11 +110,19 @@ bool PdfWriter::LoadImage(const CString& path, ImageData& out, CString& outError
     out.isJpeg = IsJpeg(path);
     if (out.isJpeg)
     {
+        // JPEG: 원본 바이트 그대로 DCTDecode 임베드 (무손실)
         std::ifstream f((LPCTSTR)path, std::ios::binary);
         if (f)
             out.raw.assign(std::istreambuf_iterator<char>(f), {});
         else
             out.isJpeg = false;
+    }
+    else
+    {
+        // 비JPEG: GDI+로 JPEG 재압축하여 DCTDecode 임베드
+        if (EncodeToJpeg(w, h, out.pixels.data(), quality, out.raw))
+            out.isJpeg = true;
+        // 실패 시 raw RGB 폴백 (isJpeg = false 유지)
     }
     return true;
 }
@@ -143,10 +212,10 @@ void PdfWriter::WriteXrefTrailer(std::ostream& os,
 // ── 공개 API ─────────────────────────────────────────────────
 
 bool PdfWriter::WriteSingle(const CString& srcPath, const CString& dstPath,
-                            CString& outError)
+                            CString& outError, int quality)
 {
     ImageData img;
-    if (!LoadImage(srcPath, img, outError)) return false;
+    if (!LoadImage(srcPath, img, outError, quality)) return false;
 
     std::ofstream os((LPCTSTR)dstPath, std::ios::binary);
     if (!os) { outError = _T("출력 파일 생성 실패"); return false; }
@@ -167,10 +236,11 @@ bool PdfWriter::WriteSingle(const CString& srcPath, const CString& dstPath,
        << "<< /Type /Pages /Kids [" << OBJ_PAGE << " 0 R] /Count 1 >>\n"
        << "endobj\n";
 
+    int effW = img.pageW ? img.pageW : img.width;
+    int effH = img.pageH ? img.pageH : img.height;
     WriteImageObj(os, img, OBJ_IMAGE, xref);
-    WriteContentObj(os, img.width, img.height, OBJ_CONTENT, xref);
-    WritePageObj(os, OBJ_PAGES, OBJ_IMAGE, OBJ_CONTENT,
-                 img.width, img.height, OBJ_PAGE, xref);
+    WriteContentObj(os, effW, effH, OBJ_CONTENT, xref);
+    WritePageObj(os, OBJ_PAGES, OBJ_IMAGE, OBJ_CONTENT, effW, effH, OBJ_PAGE, xref);
     WriteXrefTrailer(os, xref, OBJ_CATALOG, OBJ_PAGES, 5);
 
     if (!os.good()) { outError = _T("PDF 쓰기 오류"); return false; }
@@ -178,7 +248,7 @@ bool PdfWriter::WriteSingle(const CString& srcPath, const CString& dstPath,
 }
 
 bool PdfWriter::WriteMerged(const std::vector<CString>& srcPaths,
-                            const CString& dstPath, CString& outError)
+                            const CString& dstPath, CString& outError, int quality)
 {
     if (srcPaths.empty()) { outError = _T("파일 목록 없음"); return false; }
 
@@ -187,7 +257,7 @@ bool PdfWriter::WriteMerged(const std::vector<CString>& srcPaths,
     for (const auto& p : srcPaths)
     {
         ImageData img;
-        if (!LoadImage(p, img, outError)) return false;
+        if (!LoadImage(p, img, outError, quality)) return false;
         images.push_back(std::move(img));
     }
     return WriteMergedFromData(images, dstPath, outError);
@@ -232,10 +302,11 @@ bool PdfWriter::WriteMergedFromData(const std::vector<ImageData>& images,
         int contentObj = 4 + i * 3;
         int pageObj    = 5 + i * 3;
 
+        int effW = images[i].pageW ? images[i].pageW : images[i].width;
+        int effH = images[i].pageH ? images[i].pageH : images[i].height;
         WriteImageObj  (os, images[i], imgObj, xref);
-        WriteContentObj(os, images[i].width, images[i].height, contentObj, xref);
-        WritePageObj   (os, OBJ_PAGES, imgObj, contentObj,
-                        images[i].width, images[i].height, pageObj, xref);
+        WriteContentObj(os, effW, effH, contentObj, xref);
+        WritePageObj   (os, OBJ_PAGES, imgObj, contentObj, effW, effH, pageObj, xref);
     }
 
     int totalObjs = 2 + n * 3;

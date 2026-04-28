@@ -24,9 +24,34 @@ installer/*.zip
 research.md
 plan.md
 prd.html
+session_questions.md
+report.md
+report_summary.md
+report_detail.md
 
 # 기타
 *.pch
 *.iobj
 *.ipdb
 Thumbs.db
+fix_braces.ps1
+
+# Doxygen 생성 파일
+docs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 보고서 산출물
+report.html
+report.pdf
+report_detail.html
+report_detail.pdf
+report_summary.html
+report_summary.pdf
+prd2.html
+prd2_tab1.html
+prd2_tab2.html
+prd2_tab3.html
+prd2_tab4.html
+prd2_tab5.html

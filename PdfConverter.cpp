@@ -17,7 +17,8 @@ static HRESULT SyncWaitFile(
 {
     HANDLE hEv = CreateEvent(nullptr, TRUE, FALSE, nullptr);
     auto cb = Callback<IAsyncOperationCompletedHandler<StorageFile*>>(
-        [hEv](IAsyncOperation<StorageFile*>*, AsyncStatus) -> HRESULT {
+        [hEv](IAsyncOperation<StorageFile*>*, AsyncStatus) -> HRESULT
+        {
             SetEvent(hEv); return S_OK;
         });
     pAsync->put_Completed(cb.Get());
@@ -35,7 +36,8 @@ static HRESULT SyncWaitPdfDoc(
 {
     HANDLE hEv = CreateEvent(nullptr, TRUE, FALSE, nullptr);
     auto cb = Callback<IAsyncOperationCompletedHandler<PdfDocument*>>(
-        [hEv](IAsyncOperation<PdfDocument*>*, AsyncStatus) -> HRESULT {
+        [hEv](IAsyncOperation<PdfDocument*>*, AsyncStatus) -> HRESULT
+        {
             SetEvent(hEv); return S_OK;
         });
     pAsync->put_Completed(cb.Get());
@@ -49,7 +51,8 @@ static HRESULT SyncWaitAction(IAsyncAction* pAsync)
 {
     HANDLE hEv = CreateEvent(nullptr, TRUE, FALSE, nullptr);
     auto cb = Callback<IAsyncActionCompletedHandler>(
-        [hEv](IAsyncAction*, AsyncStatus) -> HRESULT {
+        [hEv](IAsyncAction*, AsyncStatus) -> HRESULT
+        {
             SetEvent(hEv); return S_OK;
         });
     pAsync->put_Completed(cb.Get());
@@ -113,7 +116,10 @@ static HRESULT LoadPdfDocument(IStorageFile* pFile, IPdfDocument** ppDoc)
 // ── GetPageCount ─────────────────────────────────────────────
 int PdfConverter::GetPageCount(const CString& pdfPath)
 {
-    RoInitialize(RO_INIT_MULTITHREADED);
+    struct RoInit {
+        RoInit()  { RoInitialize(RO_INIT_MULTITHREADED); }
+        ~RoInit() { RoUninitialize(); }
+    } roInit;
 
     int count = 0;
     do
@@ -129,7 +135,6 @@ int PdfConverter::GetPageCount(const CString& pdfPath)
         count = (int)pageCount;
     } while (false);
 
-    RoUninitialize();
     return count;
 }
 
@@ -140,7 +145,11 @@ bool PdfConverter::RenderPageToJpg(const CString& pdfPath,
                                    CString&       errMsg,
                                    int            quality)
 {
-    RoInitialize(RO_INIT_MULTITHREADED);
+    struct RoInit {
+        RoInit()  { RoInitialize(RO_INIT_MULTITHREADED); }
+        ~RoInit() { RoUninitialize(); }
+    } roInit;
+
     bool ok = false;
 
     do
@@ -235,6 +244,5 @@ bool PdfConverter::RenderPageToJpg(const CString& pdfPath,
         ok = true;
     } while (false);
 
-    RoUninitialize();
     return ok;
 }

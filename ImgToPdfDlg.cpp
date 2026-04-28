@@ -1,13 +1,6 @@
 #include "pch.h"
 #include "ImgToPdfDlg.h"
-#include "PdfWriter.h"
-#include "PdfConverter.h"
-
-// 지원 확장자 목록
-static const TCHAR* kSupportedExts[] = {
-    _T(".jpg"), _T(".jpeg"), _T(".png"),
-    _T(".bmp"), _T(".tiff"), _T(".tif"), _T(".gif")
-};
+#include "AppLang.h"
 
 BEGIN_MESSAGE_MAP(CImgToPdfDlg, CDialogEx)
     ON_WM_SYSCOMMAND()
@@ -16,122 +9,175 @@ BEGIN_MESSAGE_MAP(CImgToPdfDlg, CDialogEx)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()
     ON_WM_DESTROY()
+    ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_CTRL, &CImgToPdfDlg::OnTcnSelchangeTabCtrl)
+    ON_WM_DRAWITEM()
+    ON_BN_CLICKED(IDC_BTN_TAB_PREV,  &CImgToPdfDlg::OnBnClickedTabPrev)
+    ON_BN_CLICKED(IDC_BTN_TAB_NEXT,  &CImgToPdfDlg::OnBnClickedTabNext)
     ON_BN_CLICKED(IDC_BTN_BROWSE,    &CImgToPdfDlg::OnBnClickedBrowse)
     ON_BN_CLICKED(IDC_BTN_CONVERT,   &CImgToPdfDlg::OnBnClickedConvert)
-    ON_BN_CLICKED(IDC_CHECK_MERGE,   &CImgToPdfDlg::OnBnClickedCheckMerge)
     ON_BN_CLICKED(IDC_BTN_MOVE_UP,   &CImgToPdfDlg::OnBnClickedMoveUp)
     ON_BN_CLICKED(IDC_BTN_MOVE_DOWN, &CImgToPdfDlg::OnBnClickedMoveDown)
     ON_BN_CLICKED(IDC_BTN_CLEAR,     &CImgToPdfDlg::OnBnClickedClear)
-    ON_NOTIFY(NM_CLICK, IDC_LIST_FILES, &CImgToPdfDlg::OnNMClickListFiles)
-    ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_FILES, &CImgToPdfDlg::OnLvnItemChangedListFiles)
-    ON_MESSAGE(WM_CONVERT_PROGRESS,      &CImgToPdfDlg::OnConvertProgress)
-    ON_MESSAGE(WM_CONVERT_DONE,          &CImgToPdfDlg::OnConvertDone)
-    ON_MESSAGE(WM_LIST_ENTRIES_CHANGED,  &CImgToPdfDlg::OnListEntriesChanged)
+    ON_BN_CLICKED(IDC_CHECK_MERGE,   &CImgToPdfDlg::OnBnClickedCheckMerge)
+    ON_MESSAGE(WM_CONVERT_PROGRESS,  &CImgToPdfDlg::OnConvertProgress)
+    ON_MESSAGE(WM_CONVERT_DONE,      &CImgToPdfDlg::OnConvertDone)
+    ON_MESSAGE(WM_PDF_TOOL_DONE,     &CImgToPdfDlg::OnPdfToolDone)
+    ON_MESSAGE(WM_TAB_STATE_CHANGED, &CImgToPdfDlg::OnTabStateChanged)
+    ON_MESSAGE(WM_ROUTE_DROP,        &CImgToPdfDlg::OnRouteDrop)
+    ON_MESSAGE(WM_MD_CONVERT_DONE,   &CImgToPdfDlg::OnMdConvertDone)
+    ON_MESSAGE(WM_WORD_CONVERT_DONE, &CImgToPdfDlg::OnWordConvertDone)
+    ON_MESSAGE(WM_PPT_CONVERT_DONE,  &CImgToPdfDlg::OnPptConvertDone)
 END_MESSAGE_MAP()
 
 CImgToPdfDlg::CImgToPdfDlg(CWnd* pParent)
     : CDialogEx(IDD_IMGTOPDF_DIALOG, pParent)
+    , m_dlgTab1(this)
+    , m_dlgTab2(this)
+    , m_dlgTab3(this)
+    , m_dlgTab4(this)
+    , m_dlgTab5(this)
 {
 }
 
 void CImgToPdfDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_LBL_PATH,             m_lblPath);
-    DDX_Control(pDX, IDC_EDIT_PATH,            m_editPath);
-    DDX_Control(pDX, IDC_CHECK_MERGE,          m_checkMerge);
-    DDX_Control(pDX, IDC_BTN_BROWSE,           m_btnBrowse);
-    DDX_Control(pDX, IDC_BTN_CONVERT,          m_btnConvert);
-    DDX_Control(pDX, IDC_BTN_MOVE_UP,          m_btnMoveUp);
-    DDX_Control(pDX, IDC_BTN_MOVE_DOWN,        m_btnMoveDown);
-    DDX_Control(pDX, IDC_BTN_CLEAR,            m_btnClear);
-    DDX_Control(pDX, IDC_PROGRESS,             m_progress);
-    DDX_Control(pDX, IDC_STATIC_PROGRESS_TXT,  m_staticProgressTxt);
-    DDX_Control(pDX, IDC_LIST_FILES,           m_listFiles);
-    DDX_Control(pDX, IDC_STATIC_PREVIEW,       m_preview);
+    DDX_Control(pDX, IDC_LBL_PATH,            m_lblPath);
+    DDX_Control(pDX, IDC_EDIT_PATH,           m_editPath);
+    DDX_Control(pDX, IDC_CHECK_MERGE,         m_checkMerge);
+    DDX_Control(pDX, IDC_BTN_BROWSE,          m_btnBrowse);
+    DDX_Control(pDX, IDC_BTN_CONVERT,         m_btnConvert);
+    DDX_Control(pDX, IDC_PROGRESS,            m_progress);
+    DDX_Control(pDX, IDC_STATIC_PROGRESS_TXT, m_staticProgressTxt);
+    DDX_Control(pDX, IDC_BTN_MOVE_UP,         m_btnMoveUp);
+    DDX_Control(pDX, IDC_BTN_MOVE_DOWN,       m_btnMoveDown);
+    DDX_Control(pDX, IDC_BTN_CLEAR,           m_btnClear);
+    DDX_Control(pDX, IDC_TAB_CTRL,            m_tabCtrl);
 }
 
 BOOL CImgToPdfDlg::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
 
-    // 아이콘 설정
-    HICON hIcon = AfxGetApp()->LoadIcon(IDI_IMGTOPDF);
-    SetIcon(hIcon, TRUE);   // 큰 아이콘 (Alt+Tab, 작업 표시줄)
-    SetIcon(hIcon, FALSE);  // 작은 아이콘 (타이틀바)
-
-    // 드래그앤드롭 허용
+    LoadSavedLang();
     DragAcceptFiles(TRUE);
 
-    // 리스트뷰 컬럼 설정
-    m_listFiles.SetupColumns();
+    // icon
+    HICON hIcon = AfxGetApp()->LoadIcon(IDI_IMGTOPDF);
+    SetIcon(hIcon, TRUE);
+    SetIcon(hIcon, FALSE);
 
-    // 프로그레스바 초기화
-    m_progress.SetRange32(0, 100);
-    m_progress.SetPos(0);
-    m_staticProgressTxt.SetIdle();
-
-    // ── 시스템 메뉴에 "사용 방법" 항목 추가 ──────────────────
+    // system menu entries
     CMenu* pSysMenu = GetSystemMenu(FALSE);
     if (pSysMenu)
     {
         pSysMenu->AppendMenu(MF_SEPARATOR);
-        pSysMenu->AppendMenu(MF_STRING, IDM_HELP_USAGE, _T("사용 방법(&H)..."));
+        pSysMenu->AppendMenu(MF_STRING, IDM_HELP_USAGE, LS(IDS_MENU_HELP));
+        pSysMenu->AppendMenu(MF_STRING, IDM_LANG_TOGGLE,
+            (g_lang == Lang::KO) ? L"Switch to English" : L"\ud55c\uad6d\uc5b4\ub85c \uc804\ud658");
     }
 
-    // ── 에디트박스 플레이스홀더 ──────────────────────────────────
-    m_editPath.SendMessage(EM_SETCUEBANNER, FALSE,
-        (LPARAM)L"F1을 누르면 사용 방법이 나옵니다.");
+    // background
+    SetBackgroundColor(RGB(248, 249, 252));
 
-    // ── 툴팁 설정 ────────────────────────────────────────────
+    // progress bar — classic mode + edit-box style border
+    SetWindowTheme(m_progress.GetSafeHwnd(), L"", L"");
+    m_progress.ModifyStyleEx(0, WS_EX_CLIENTEDGE);
+    m_progress.SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    m_progress.SetRange32(0, 100);
+    m_progress.SetPos(0);
+    m_progress.SendMessage(PBM_SETBARCOLOR, 0, (LPARAM)RGB(37, 99, 235));
+    m_progress.SendMessage(PBM_SETBKCOLOR,  0, (LPARAM)RGB(248, 249, 252));
+    m_staticProgressTxt.SetIdle();
+
+    // CColorButton: DrawItem 직접 구현 — 한글 깨짐 없이 색상 적용
+    m_btnConvert.SetColors(RGB(37, 99, 235), RGB(29, 78, 216), RGB(255, 255, 255));
+    m_btnBrowse.SetColors(RGB(255, 255, 255), RGB(235, 243, 255), RGB(37, 99, 235));
+
+    // CMFCButton 소형 버튼: flat 호버 효과
+    m_btnMoveUp.m_nFlatStyle   = CMFCButton::BUTTONSTYLE_SEMIFLAT;
+    m_btnMoveDown.m_nFlatStyle = CMFCButton::BUTTONSTYLE_SEMIFLAT;
+    m_btnClear.m_nFlatStyle    = CMFCButton::BUTTONSTYLE_SEMIFLAT;
+
+    // editPath placeholder
+    {
+        CString cue = LS(IDS_CUE_PATH);
+        m_editPath.SendMessage(EM_SETCUEBANNER, FALSE, (LPARAM)(LPCWSTR)cue);
+    }
+
+    // tooltips
     m_toolTip.Create(this, TTS_ALWAYSTIP);
     m_toolTip.SetMaxTipWidth(260);
     m_toolTip.SetDelayTime(TTDT_INITIAL, 400);
 
-    struct TipDef { CWnd* w; LPCTSTR tip; };
-    TipDef tips[] = {
-        { &m_editPath,          _T("변환할 파일의 경로가 표시됩니다.") },
-        { &m_checkMerge,        _T("체크: 모든 이미지 → 하나의 다중 페이지 PDF\n미체크: 각 이미지 → 개별 PDF 파일\n(PDF 항목 포함 시 자동 비활성)") },
-        { &m_btnBrowse,         _T("이미지 또는 PDF 파일을 선택합니다.\n다중 선택 지원 | 창에 드래그앤드롭도 가능") },
-        { &m_btnConvert,        _T("변환 시작\n변환 중 클릭 시 현재 파일 완료 후 중단") },
-        { &m_staticProgressTxt, _T("(완료 / 실패 / 총계)\n완료: 초록  실패: 빨강  총계: 기본색") },
-        { &m_btnMoveUp,         _T("선택한 이미지 항목을 위로 이동\n(PDF 페이지 항목은 이동 불가)") },
-        { &m_btnMoveDown,       _T("선택한 이미지 항목을 아래로 이동\n(PDF 페이지 항목은 이동 불가)") },
-        { &m_btnClear,          _T("항목을 선택하면 제거할 수 있습니다.\n변환 완료 후에는 전체 초기화합니다.") },
-        { &m_listFiles,         _T("파일 목록\n• 드래그앤드롭 또는 [찾기]로 추가\n• 클릭: 미리보기 표시\n• Delete 키: 선택 항목 제거\n• 우클릭: 제거 / 파일 위치 열기") },
-        { &m_preview,           _T("목록에서 이미지 항목을 클릭하면 미리보기가 표시됩니다.") },
-    };
-    for (auto& t : tips)
-        m_toolTip.AddTool(t.w, t.tip);
+    m_toolTip.AddTool(&m_editPath,        LS(IDS_TIP_EDITPATH));
+    m_toolTip.AddTool(&m_checkMerge,      LS(IDS_TIP_MERGE));
+    m_toolTip.AddTool(&m_btnBrowse,       LS(IDS_TIP_BROWSE));
+    m_toolTip.AddTool(&m_btnConvert,      LS(IDS_TIP_CONVERT));
+    m_toolTip.AddTool(&m_staticProgressTxt, LS(IDS_TIP_PROGRESS));
+    m_toolTip.AddTool(&m_btnMoveUp,       LS(IDS_TIP_MOVEUP));
+    m_toolTip.AddTool(&m_btnMoveDown,     LS(IDS_TIP_MOVEDOWN));
+    m_toolTip.AddTool(&m_btnClear,        LS(IDS_TIP_CLEAR_BASE));
     m_toolTip.Activate(TRUE);
 
-    // 초기 클라이언트 크기 및 컨트롤 위치 캡처
+    // capture layout baseline
     CRect rcClient;
     GetClientRect(&rcClient);
     m_initCx = rcClient.Width();
     m_initCy = rcClient.Height();
 
-    auto capture = [&](CWnd& w, CRect& rc) {
-        w.GetWindowRect(&rc); ScreenToClient(&rc);
-    };
-    capture(m_editPath,        m_rcEdit0);
-    capture(m_checkMerge,      m_rcMerge0);
-    capture(m_btnBrowse,       m_rcBrowse0);
-    capture(m_btnConvert,      m_rcConvert0);
-    capture(m_progress,          m_rcProg0);
-    capture(m_staticProgressTxt, m_rcProgTxt0);
-    capture(m_btnMoveUp,         m_rcMoveUp0);
-    capture(m_btnMoveDown,       m_rcMoveDown0);
-    capture(m_btnClear,          m_rcClear0);
-    capture(m_listFiles,       m_rcList0);
-    capture(m_preview,         m_rcPreview0);
+    auto cap = [&](CWnd& w, CRect& rc) { w.GetWindowRect(&rc); ScreenToClient(&rc); };
+    cap(m_editPath,          m_rcEdit0);
+    cap(m_checkMerge,        m_rcMerge0);
+    cap(m_btnBrowse,         m_rcBrowse0);
+    cap(m_btnConvert,        m_rcConvert0);
+    cap(m_progress,          m_rcProg0);
+    cap(m_staticProgressTxt, m_rcProgTxt0);
+    cap(m_btnMoveUp,         m_rcMoveUp0);
+    cap(m_btnMoveDown,       m_rcMoveDown0);
+    cap(m_btnClear,          m_rcClear0);
+    cap(m_tabCtrl,           m_rcTab0);
 
-    // 초기 포커스를 리스트뷰로 이동 — 에디트박스 포커스 시 플레이스홀더가 숨겨지는 것 방지
-    m_listFiles.SetFocus();
-    return FALSE;  // FALSE = 포커스를 직접 설정했음을 MFC에 알림
+    // register tab labels
+    m_tabCtrl.InsertItem(0, LS(IDS_TAB1_LABEL));
+    m_tabCtrl.InsertItem(1, LS(IDS_TAB2_LABEL));
+    m_tabCtrl.InsertItem(2, LS(IDS_TAB3_LABEL));
+    m_tabCtrl.InsertItem(3, LS(IDS_TAB4_LABEL));
+    m_tabCtrl.InsertItem(4, LS(IDS_TAB5_LABEL));
+
+    // pointer array (default order)
+    m_tabDlgs[0] = &m_dlgTab1;
+    m_tabDlgs[1] = &m_dlgTab2;
+    m_tabDlgs[2] = &m_dlgTab3;
+    m_tabDlgs[3] = &m_dlgTab4;
+    m_tabDlgs[4] = &m_dlgTab5;
+
+    // inject host HWND into each tab before Create()
+    m_dlgTab1.m_hHostNotify = GetSafeHwnd();
+    m_dlgTab2.m_hHostNotify = GetSafeHwnd();
+    m_dlgTab3.m_hHostNotify = GetSafeHwnd();
+    m_dlgTab4.m_hHostNotify = GetSafeHwnd();
+    m_dlgTab5.m_hHostNotify = GetSafeHwnd();
+
+    // create child dialogs as non-modal WS_CHILD children of the main dialog
+    m_dlgTab1.Create(IDD_TAB1, this);
+    m_dlgTab2.Create(IDD_TAB2, this);
+    m_dlgTab3.Create(IDD_TAB3, this);
+    m_dlgTab4.Create(IDD_TAB4, this);
+    m_dlgTab5.Create(IDD_TAB5, this);
+
+    // ◀▶ buttons (positioned over tab header row)
+    CreateTabNavButtons();
+
+    // restore saved tab order from registry
+    LoadTabOrder();
+
+    // size and show first tab
+    RepositionTabDialogs();
+    ShowTab(0);
+
+    return TRUE;
 }
-
-// ── PreTranslateMessage — 툴팁 릴레이 ──────────────────────
 
 BOOL CImgToPdfDlg::PreTranslateMessage(MSG* pMsg)
 {
@@ -140,433 +186,181 @@ BOOL CImgToPdfDlg::PreTranslateMessage(MSG* pMsg)
     return CDialogEx::PreTranslateMessage(pMsg);
 }
 
-// ── 시스템 메뉴 / F1 → 사용 방법 다이얼로그 ─────────────────
+// ── drag-and-drop routing ────────────────────────────────────
 
-void CImgToPdfDlg::OnSysCommand(UINT nID, LPARAM lParam)
+static bool IsImageExt(const CString& lower)
 {
-    if (nID == IDM_HELP_USAGE)
-        ShowHelpDialog();
-    else
-        CDialogEx::OnSysCommand(nID, lParam);
+    return lower == _T(".jpg")  || lower == _T(".jpeg") ||
+           lower == _T(".png")  || lower == _T(".bmp")  ||
+           lower == _T(".tiff") || lower == _T(".tif")  || lower == _T(".gif");
 }
 
-BOOL CImgToPdfDlg::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
+void CImgToPdfDlg::ScanFolder(const CString& folder, std::vector<CString>& out)
 {
-    ShowHelpDialog();
-    return TRUE;
-}
-
-void CImgToPdfDlg::ShowHelpDialog()
-{
-    const wchar_t* msg =
-        L"ImgToPdf — 이미지 \u2194 PDF 양방향 변환\n"
-        L"\n"
-        L"이미지를 PDF로 변환하거나 PDF를 페이지별 JPG로 추출합니다.\n"
-        L"파일은 드래그앤드롭 또는 [찾기] 버튼으로 추가하세요.\n"
-        L"\n"
-        L"[ 이미지 \u2192 PDF ]\n"
-        L"1. JPG/PNG/BMP/TIFF/GIF 파일을 드래그하거나 [찾기]로 추가\n"
-        L"2. (선택) 합치기 체크 \u2192 모든 이미지를 하나의 다중 페이지 PDF로 합침\n"
-        L"3. (선택) \u25b2\u25bc 버튼으로 변환 순서 조정\n"
-        L"4. [변환] 클릭 \u2192 원본 파일과 같은 폴더에 PDF 저장\n"
-        L"\n"
-        L"[ PDF \u2192 JPG ]\n"
-        L"1. PDF 파일을 드래그하거나 [찾기]로 추가\n"
-        L"2. 페이지 수가 자동 스캔되어 페이지별로 목록에 표시됨\n"
-        L"3. [변환] 클릭 \u2192 원본명_p001.jpg, _p002.jpg ... 형태로 저장\n"
-        L"\n"
-        L"[ 공통 ]\n"
-        L"- Delete 키 또는 우클릭으로 선택 항목 제거\n"
-        L"- 변환 중 [중단] \u2192 현재 파일 완료 후 중단\n"
-        L"- 변환 완료 후 [삭제] \u2192 목록 전체 초기화\n"
-        L"- 합치기는 이미지 항목만 지원 (PDF 항목 포함 시 자동 비활성)\n"
-        L"- 각 버튼/컨트롤에 마우스를 올리면 툴팁 설명이 표시됩니다\n"
-        L"\n"
-        L"(F1 또는 타이틀바 우클릭 \u2192 사용 방법으로 이 창을 열 수 있습니다.)\n"
-        L"\n"
-        L"────────────────────────────────────\n"
-        L"제작자  jaeho\n"
-        L"문의    jaeho9697@gmail.com";
-
-    ::MessageBoxW(GetSafeHwnd(), msg, L"사용 방법", MB_OK | MB_ICONINFORMATION);
-}
-
-void CImgToPdfDlg::OnCancel()
-{
-    if (m_bConverting)
+    CString pattern = folder + _T("\\*");
+    WIN32_FIND_DATA fd = {};
+    HANDLE hFind = FindFirstFile(pattern, &fd);
+    if (hFind == INVALID_HANDLE_VALUE) return;
+    do
     {
-        m_bStopRequested = true;
-        m_worker.Stop();
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+        out.push_back(folder + _T("\\") + fd.cFileName);
+    } while (FindNextFile(hFind, &fd));
+    FindClose(hFind);
+}
+
+void CImgToPdfDlg::RouteDroppedFiles(const std::vector<CString>& paths)
+{
+    std::vector<CString> imgFiles, pdfFiles, mdFiles, wordFiles, pptFiles;
+
+    for (const auto& p : paths)
+    {
+        DWORD attr = GetFileAttributes(p);
+        if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            std::vector<CString> found;
+            ScanFolder(p, found);
+            for (const auto& f : found)
+            {
+                CString ext = PathFindExtension(f);
+                ext.MakeLower();
+                if (IsImageExt(ext))                               imgFiles.push_back(f);
+                else if (ext == _T(".pdf"))                        pdfFiles.push_back(f);
+                else if (ext == _T(".md"))                         mdFiles.push_back(f);
+                else if (ext == _T(".doc") || ext == _T(".docx"))  wordFiles.push_back(f);
+                else if (ext == _T(".ppt") || ext == _T(".pptx"))  pptFiles.push_back(f);
+            }
+        }
+        else
+        {
+            CString ext = PathFindExtension(p);
+            ext.MakeLower();
+            if (IsImageExt(ext))                               imgFiles.push_back(p);
+            else if (ext == _T(".pdf"))                        pdfFiles.push_back(p);
+            else if (ext == _T(".md"))                         mdFiles.push_back(p);
+            else if (ext == _T(".doc") || ext == _T(".docx"))  wordFiles.push_back(p);
+            else if (ext == _T(".ppt") || ext == _T(".pptx"))  pptFiles.push_back(p);
+        }
     }
-    CDialogEx::OnCancel();
+
+    if (!imgFiles.empty()) m_dlgTab1.AddFiles(imgFiles);
+    if (!pdfFiles.empty())
+    {
+        m_dlgTab2.AddPdfFiles(pdfFiles);
+        for (int i = 0; i < 5; ++i)
+            if (m_tabDlgs[i] == &m_dlgTab2) { ShowTab(i); break; }
+    }
+    if (!mdFiles.empty())  m_dlgTab3.AddMdFiles(mdFiles);
+    if (!wordFiles.empty())
+    {
+        m_dlgTab4.AddWordFiles(wordFiles);
+        for (int i = 0; i < 5; ++i)
+            if (m_tabDlgs[i] == &m_dlgTab4) { ShowTab(i); break; }
+    }
+    if (!pptFiles.empty())
+    {
+        m_dlgTab5.AddPptFiles(pptFiles);
+        for (int i = 0; i < 5; ++i)
+            if (m_tabDlgs[i] == &m_dlgTab5) { ShowTab(i); break; }
+    }
 }
-
-void CImgToPdfDlg::OnDestroy()
-{
-    m_bStopRequested = true;
-    m_worker.Stop();
-    CDialogEx::OnDestroy();
-}
-
-// ── 창 크기 조절 ──────────────────────────────────────────────
-
-void CImgToPdfDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
-    lpMMI->ptMinTrackSize.x = 800;
-    lpMMI->ptMinTrackSize.y = 600;
-    CDialogEx::OnGetMinMaxInfo(lpMMI);
-}
-
-void CImgToPdfDlg::OnSize(UINT nType, int cx, int cy)
-{
-    CDialogEx::OnSize(nType, cx, cy);
-    if (nType == SIZE_MINIMIZED) return;
-    if (!m_listFiles.GetSafeHwnd()) return;
-    ResizeControls(cx, cy);
-}
-
-void CImgToPdfDlg::ResizeControls(int cx, int cy)
-{
-    if (m_initCx == 0) return;  // 초기값 미캡처 시 무시
-
-    int dw = cx - m_initCx;  // 가로 증가분
-    int dh = cy - m_initCy;  // 세로 증가분
-
-    // 오른쪽 고정(우측 앵커): 원래 right + dw
-    // 가로 늘어나는 컨트롤: 원래 width + dw
-    // 세로 늘어나는 컨트롤: 원래 height + dh (리스트/미리보기)
-
-    auto move = [&](CWnd& w, CRect r) {
-        w.MoveWindow(r.left, r.top, r.Width(), r.Height());
-    };
-
-    // 에디트박스: 오른쪽으로 늘어남
-    CRect r = m_rcEdit0;
-    r.right += dw;
-    move(m_editPath, r);
-
-    // 합치기 체크박스: 우측 고정
-    r = m_rcMerge0;
-    r.OffsetRect(dw, 0);
-    move(m_checkMerge, r);
-
-    // 찾기 버튼: 우측 고정
-    r = m_rcBrowse0;
-    r.OffsetRect(dw, 0);
-    move(m_btnBrowse, r);
-
-    // 변환 버튼: 우측 고정
-    r = m_rcConvert0;
-    r.OffsetRect(dw, 0);
-    move(m_btnConvert, r);
-
-    // 프로그레스바: 오른쪽으로 늘어남
-    r = m_rcProg0;
-    r.right += dw;
-    move(m_progress, r);
-
-    // 상태 텍스트: 우측 고정
-    r = m_rcProgTxt0;
-    r.OffsetRect(dw, 0);
-    move(m_staticProgressTxt, r);
-
-    // 이동/삭제 버튼: 우측 고정
-    r = m_rcMoveUp0;
-    r.OffsetRect(dw, 0);
-    move(m_btnMoveUp, r);
-
-    r = m_rcMoveDown0;
-    r.OffsetRect(dw, 0);
-    move(m_btnMoveDown, r);
-
-    r = m_rcClear0;
-    r.OffsetRect(dw, 0);
-    move(m_btnClear, r);
-
-    // 리스트뷰: 가로+세로 늘어남 (세로는 절반씩 배분)
-    r = m_rcList0;
-    r.right  += dw;
-    r.bottom += dh / 2;
-    move(m_listFiles, r);
-
-    // 미리보기: 리스트 아래 붙어서 가로+세로 늘어남
-    r = m_rcPreview0;
-    r.left   = m_rcList0.left;
-    r.top    = m_rcList0.bottom + (dh / 2) + 4;
-    r.right  = m_rcList0.right + dw;
-    r.bottom = m_initCy + dh - 4;
-    move(m_preview, r);
-
-    Invalidate();
-}
-
-// ── 드래그앤드롭 ─────────────────────────────────────────────
 
 void CImgToPdfDlg::OnDropFiles(HDROP hDropInfo)
 {
     UINT count = DragQueryFile(hDropInfo, 0xFFFFFFFF, nullptr, 0);
-    std::vector<CString> filePaths;
+    std::vector<CString> paths;
     for (UINT i = 0; i < count; ++i)
     {
         TCHAR buf[MAX_PATH] = {};
         DragQueryFile(hDropInfo, i, buf, MAX_PATH);
-        CString path(buf);
-        DWORD attr = GetFileAttributes(path);
-        if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
-            AddFolder(path);
-        else
-            filePaths.push_back(path);
+        paths.emplace_back(buf);
     }
     DragFinish(hDropInfo);
-    AddFiles(filePaths);
+    RouteDroppedFiles(paths);
 }
 
-// ── 찾기 버튼 ────────────────────────────────────────────────
+LRESULT CImgToPdfDlg::OnRouteDrop(WPARAM, LPARAM lParam)
+{
+    auto* paths = reinterpret_cast<std::vector<CString>*>(lParam);
+    if (paths) RouteDroppedFiles(*paths);
+    return 0;
+}
+
+// ── common control button handlers ───────────────────────────
 
 void CImgToPdfDlg::OnBnClickedBrowse()
 {
-    // 파일 다중 선택 다이얼로그
-    TCHAR filter[] =
-        _T("이미지/PDF 파일\0*.jpg;*.jpeg;*.png;*.bmp;*.tiff;*.tif;*.gif;*.pdf\0")
-        _T("이미지 파일\0*.jpg;*.jpeg;*.png;*.bmp;*.tiff;*.tif;*.gif\0")
-        _T("PDF 파일\0*.pdf\0")
-        _T("모든 파일\0*.*\0\0");
-
-    TCHAR szFile[32768] = {};
-    OPENFILENAME ofn   = {};
-    ofn.lStructSize    = sizeof(ofn);
-    ofn.hwndOwner      = GetSafeHwnd();
-    ofn.lpstrFilter    = filter;
-    ofn.lpstrFile      = szFile;
-    ofn.nMaxFile       = _countof(szFile);
-    ofn.Flags          = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_EXPLORER;
-
-    if (!GetOpenFileName(&ofn)) return;
-
-    // 다중 선택 파싱 (디렉토리 + NULL + 파일들 + NULL NULL)
-    std::vector<CString> paths;
-    TCHAR* p = szFile;
-    CString dir(p);
-    p += dir.GetLength() + 1;
-
-    if (*p == _T('\0'))
-    {
-        // 단일 파일 선택
-        paths.push_back(dir);
-    }
-    else
-    {
-        while (*p != _T('\0'))
-        {
-            CString name(p);
-            paths.push_back(dir + _T("\\") + name);
-            p += name.GetLength() + 1;
-        }
-    }
-
-    if (!paths.empty())
-    {
-        CString firstDir = paths[0].Left(paths[0].ReverseFind(_T('\\')));
-        m_editPath.SetWindowText(firstDir);
-    }
-    AddFiles(paths);
+    ActiveTab()->OnCommonBrowse(m_editPath);
 }
-
-// ── 변환 버튼 ────────────────────────────────────────────────
 
 void CImgToPdfDlg::OnBnClickedConvert()
 {
-    if (m_bConverting)
+    // init progress counters when starting tab1 conversion (not stopping)
+    if (ActiveTab() == &m_dlgTab1 && !m_dlgTab1.IsRunning())
     {
-        m_bStopRequested = true;
-        return;
+        m_cntSuccess = 0;
+        m_cntFail    = 0;
+        m_cntTotal   = m_dlgTab1.GetEntryCount();
+        m_progress.SetRange32(0, m_cntTotal > 0 ? m_cntTotal : 1);
+        m_progress.SetPos(0);
+        m_staticProgressTxt.SetCounts(0, 0, m_cntTotal);
     }
-
-    const auto& entries = m_listFiles.GetEntries();
-    if (entries.empty()) return;
-
-    SetConvertingState(true);
-
-    bool bMerge = (m_checkMerge.GetCheck() == BST_CHECKED);
-    int  total  = (int)entries.size();
-    m_cntSuccess = 0;
-    m_cntFail    = 0;
-    m_cntTotal   = total;
-    m_progress.SetRange32(0, total);
-    m_progress.SetPos(0);
-    m_staticProgressTxt.SetCounts(0, 0, total);
-
-    // 모든 항목 상태를 Wait로 초기화
-    m_listFiles.SetRowColorsEnabled(true);
-    for (int i = 0; i < total; ++i)
-        m_listFiles.SetStatus(i, FileEntry::Status::Wait);
-
-    // ConvertTask 구성
-    ConvertTask task;
-    task.bMerge  = bMerge;
-    task.hNotify = GetSafeHwnd();
-    task.pStop   = &m_bStopRequested;
-    for (auto& e : const_cast<std::vector<FileEntry>&>(entries))
-        task.entries.push_back(&e);
-
-    m_worker.Start(std::move(task));
+    ActiveTab()->OnCommonRun(m_checkMerge.GetCheck() == BST_CHECKED);
 }
-
-void CImgToPdfDlg::SetConvertingState(bool bConverting)
-{
-    m_bConverting = bConverting;
-    m_btnConvert.SetWindowText(bConverting ? _T("중단") : _T("변환"));
-    m_btnBrowse.EnableWindow(!bConverting);
-    // 변환 중 드래그앤드롭 차단: entries 벡터 재할당으로 인한 댕글링 포인터 방지
-    DragAcceptFiles(!bConverting);
-    // 합치기 체크박스: PdfPage 항목 유무에 따라 활성화 결정
-    if (!bConverting) UpdateMergeCheckState();
-    else              m_checkMerge.EnableWindow(FALSE);
-    // 이동/삭제 버튼
-    UpdateMoveButtonState();
-    UpdateClearButtonState();
-}
-
-// ── 상하 이동 버튼 ───────────────────────────────────────────
 
 void CImgToPdfDlg::OnBnClickedMoveUp()
 {
-    int idx = m_listFiles.GetNextItem(-1, LVNI_SELECTED);
-    if (m_listFiles.MoveUp(idx))
-    {
-        if (m_checkMerge.GetCheck() == BST_CHECKED)
-            m_listFiles.SetMergeMode(true);
-        UpdateMoveButtonState();
-    }
+    ActiveTab()->OnCommonMoveUp();
 }
 
 void CImgToPdfDlg::OnBnClickedMoveDown()
 {
-    int idx = m_listFiles.GetNextItem(-1, LVNI_SELECTED);
-    if (m_listFiles.MoveDown(idx))
-    {
-        if (m_checkMerge.GetCheck() == BST_CHECKED)
-            m_listFiles.SetMergeMode(true);
-        UpdateMoveButtonState();
-    }
-}
-
-void CImgToPdfDlg::UpdateMoveButtonState()
-{
-    if (m_bConverting)
-    {
-        m_btnMoveUp.EnableWindow(FALSE);
-        m_btnMoveDown.EnableWindow(FALSE);
-        return;
-    }
-
-    int idx = m_listFiles.GetNextItem(-1, LVNI_SELECTED);
-    const auto& entries = m_listFiles.GetEntries();
-    int n = (int)entries.size();
-
-    if (idx < 0 || idx >= n ||
-        entries[idx].type == FileEntry::Type::PdfPage)
-    {
-        m_btnMoveUp.EnableWindow(FALSE);
-        m_btnMoveDown.EnableWindow(FALSE);
-        return;
-    }
-
-    m_btnMoveUp.EnableWindow(idx > 0);
-    m_btnMoveDown.EnableWindow(idx < n - 1);
-}
-
-void CImgToPdfDlg::UpdateClearButtonState()
-{
-    if (m_bConverting)
-    {
-        m_btnClear.EnableWindow(FALSE);
-        return;
-    }
-
-    bool hasSelection = (m_listFiles.GetNextItem(-1, LVNI_SELECTED) >= 0);
-
-    if (m_bConversionDone)
-    {
-        m_btnClear.EnableWindow(TRUE);
-        m_toolTip.UpdateTipText(
-            _T("목록·진행 상태를 전체 초기화합니다."), &m_btnClear);
-    }
-    else if (hasSelection)
-    {
-        m_btnClear.EnableWindow(TRUE);
-        m_toolTip.UpdateTipText(
-            _T("선택한 항목을 목록에서 제거합니다."), &m_btnClear);
-    }
-    else
-    {
-        m_btnClear.EnableWindow(FALSE);
-        m_toolTip.UpdateTipText(
-            _T("항목을 선택하면 제거할 수 있습니다.\n변환 완료 후에는 전체 초기화합니다."),
-            &m_btnClear);
-    }
+    ActiveTab()->OnCommonMoveDown();
 }
 
 void CImgToPdfDlg::OnBnClickedClear()
 {
-    if (m_bConversionDone)
-    {
-        // 변환 완료 후 → 전체 초기화 (확인)
-        if (::MessageBoxW(GetSafeHwnd(),
-                L"목록과 진행 상태를 모두 초기화합니다.\n계속하시겠습니까?",
-                L"초기화 확인",
-                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) != IDYES)
-            return;
+    bool wasDone = ActiveTab()->IsDone();
+    ActiveTab()->OnCommonClear(wasDone);
 
-        m_listFiles.Clear();
-        m_editPath.SetWindowText(_T(""));
+    // if a full reset just happened (wasDone is now false), clear progress display
+    if (wasDone && !ActiveTab()->IsDone())
+    {
+        m_cntSuccess = 0; m_cntFail = 0; m_cntTotal = 0;
         m_progress.SetPos(0);
         m_staticProgressTxt.SetIdle();
-        m_cntSuccess      = 0;
-        m_cntFail         = 0;
-        m_cntTotal        = 0;
-        m_bConversionDone = false;
-        UpdateMergeCheckState();
-        UpdateMoveButtonState();
-        UpdateClearButtonState();
+        m_editPath.SetWindowText(_T(""));
     }
-    else
-    {
-        // 일반 상태 → 선택 항목만 삭제
-        // RemoveSelected 내부에서 WM_LIST_ENTRIES_CHANGED를 PostMessage하므로
-        // UpdateMergeCheckState / UpdateClearButtonState는 그쪽에서 처리됨
-        m_listFiles.RemoveSelected();
-    }
+    UpdateCommonState();
 }
-
-void CImgToPdfDlg::OnLvnItemChangedListFiles(NMHDR* pNMHDR, LRESULT* pResult)
-{
-    UpdateMoveButtonState();
-    UpdateClearButtonState();
-    *pResult = 0;
-}
-
-// ── 합치기 체크박스 ──────────────────────────────────────────
 
 void CImgToPdfDlg::OnBnClickedCheckMerge()
 {
-    bool bMerge = (m_checkMerge.GetCheck() == BST_CHECKED);
-    m_listFiles.SetMergeMode(bMerge);
+    ActiveTab()->OnCommonMergeChanged(m_checkMerge.GetCheck() == BST_CHECKED);
 }
 
-// ── 리스트 클릭 → 미리보기 ──────────────────────────────────
+// ── common state update ───────────────────────────────────────
 
-void CImgToPdfDlg::OnNMClickListFiles(NMHDR* pNMHDR, LRESULT* pResult)
+void CImgToPdfDlg::UpdateCommonState()
 {
-    NMITEMACTIVATE* pNMIA = reinterpret_cast<NMITEMACTIVATE*>(pNMHDR);
-    int idx = pNMIA->iItem;
-    const auto& entries = m_listFiles.GetEntries();
-    if (idx >= 0 && idx < (int)entries.size())
-        m_preview.LoadImage(entries[idx].srcPath);
-    *pResult = 0;
+    if (!m_tabCtrl.GetSafeHwnd()) return;
+    CTabDlgBase* active = ActiveTab();
+    if (!active) return;
+
+    m_btnConvert.SetWindowText(active->RunLabel());
+    m_btnConvert.EnableWindow(active->CanRun() || active->IsRunning());
+    m_btnMoveUp.EnableWindow(active->CanMoveUp());
+    m_btnMoveDown.EnableWindow(active->CanMoveDown());
+    m_btnClear.EnableWindow(active->CanDelete());
+    m_toolTip.UpdateTipText(active->ClearTooltip(), &m_btnClear);
+
+    bool canMerge = active->CanMerge();
+    m_checkMerge.EnableWindow(canMerge);
+    if (!canMerge && m_checkMerge.GetCheck() == BST_CHECKED)
+        m_checkMerge.SetCheck(BST_UNCHECKED);
 }
 
-// ── 변환 진행 메시지 ─────────────────────────────────────────
+// ── WM_CONVERT_PROGRESS (from ImgConvertDlg worker) ──────────
 
 LRESULT CImgToPdfDlg::OnConvertProgress(WPARAM wParam, LPARAM lParam)
 {
@@ -574,12 +368,7 @@ LRESULT CImgToPdfDlg::OnConvertProgress(WPARAM wParam, LPARAM lParam)
     auto st         = (ConvertStatus)lParam;
     bool isTerminal = (st == ConvertStatus::Success || st == ConvertStatus::Fail);
 
-    switch (st)
-    {
-    case ConvertStatus::Success: m_listFiles.SetStatus(idx, FileEntry::Status::Success); break;
-    case ConvertStatus::Fail:    m_listFiles.SetStatus(idx, FileEntry::Status::Fail);    break;
-    case ConvertStatus::Running: m_listFiles.SetStatus(idx, FileEntry::Status::Running); break;
-    }
+    m_dlgTab1.SetFileStatus(idx, st);
 
     if (isTerminal)
     {
@@ -591,138 +380,411 @@ LRESULT CImgToPdfDlg::OnConvertProgress(WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-LRESULT CImgToPdfDlg::OnConvertDone(WPARAM wParam, LPARAM lParam)
+LRESULT CImgToPdfDlg::OnConvertDone(WPARAM, LPARAM)
 {
-    SetConvertingState(false);
-    m_listFiles.SetRowColorsEnabled(false);
+    // m_cntSuccess/m_cntFail already accumulated via OnConvertProgress
     m_staticProgressTxt.SetCounts(m_cntSuccess, m_cntFail, m_cntTotal);
-    m_bStopRequested  = false;
-    m_bConversionDone = true;
-    UpdateClearButtonState();
+    m_dlgTab1.NotifyConvertDone();
+    UpdateCommonState();
     return 0;
 }
 
-LRESULT CImgToPdfDlg::OnListEntriesChanged(WPARAM, LPARAM)
+// ── WM_PDF_TOOL_DONE (from PdfToolsDlg worker) ───────────────
+
+LRESULT CImgToPdfDlg::OnPdfToolDone(WPARAM wParam, LPARAM)
 {
-    // RemoveSelected 완료 후 m_entries가 확정된 시점에 호출됨
-    UpdateMergeCheckState();
-    UpdateMoveButtonState();
-    UpdateClearButtonState();
+    bool ok = (wParam != 0);
+    m_dlgTab2.NotifyRunDone(ok);
+    m_staticProgressTxt.SetWindowText(ok ? LS(IDS_PROGRESS_DONE) : LS(IDS_PROGRESS_ERROR));
+    UpdateCommonState();
     return 0;
 }
 
-// ── 헬퍼 ─────────────────────────────────────────────────────
+// ── WM_MD_CONVERT_DONE (from MdConvertDlg worker) ────────────
 
-bool CImgToPdfDlg::IsSupportedExt(const CString& ext) const
+LRESULT CImgToPdfDlg::OnMdConvertDone(WPARAM wParam, LPARAM)
 {
-    CString lower(ext);
-    lower.MakeLower();
-    for (auto* e : kSupportedExts)
-        if (lower == e) return true;
-    return false;
+    bool ok = (wParam != 0);
+    m_dlgTab3.NotifyConvertDone(ok);
+    UpdateCommonState();
+    return 0;
 }
 
-void CImgToPdfDlg::AddFiles(const std::vector<CString>& paths)
+LRESULT CImgToPdfDlg::OnWordConvertDone(WPARAM wParam, LPARAM)
 {
-    for (const auto& path : paths)
+    bool ok = (wParam != 0);
+    m_dlgTab4.NotifyConvertDone(ok);
+    UpdateCommonState();
+    return 0;
+}
+
+LRESULT CImgToPdfDlg::OnPptConvertDone(WPARAM wParam, LPARAM)
+{
+    bool ok = (wParam != 0);
+    m_dlgTab5.NotifyConvertDone(ok);
+    UpdateCommonState();
+    return 0;
+}
+
+// ── WM_TAB_STATE_CHANGED (from any tab) ──────────────────────
+
+LRESULT CImgToPdfDlg::OnTabStateChanged(WPARAM, LPARAM)
+{
+    UpdateCommonState();
+    return 0;
+}
+
+// ── ◀▶ buttons ───────────────────────────────────────────────
+
+void CImgToPdfDlg::CreateTabNavButtons()
+{
+    CFont* pFont = GetFont();
+
+    m_btnTabPrev.Create(L"◀", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP,
+                        CRect(0, 0, 28, 20), this, IDC_BTN_TAB_PREV);
+    m_btnTabNext.Create(L"▶", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP,
+                        CRect(0, 0, 28, 20), this, IDC_BTN_TAB_NEXT);
+
+    if (pFont)
     {
-        CString ext = PathFindExtension(path);
-        CString lower(ext);
-        lower.MakeLower();
-
-        // PDF 파일: 페이지별 행 추가
-        if (lower == _T(".pdf"))
-        {
-            int pageCount = PdfConverter::GetPageCount(path);
-            if (pageCount <= 0) continue;
-
-            CString baseName = PathFindFileName(path);
-            int dotPos = baseName.ReverseFind(_T('.'));
-            CString stem = (dotPos >= 0) ? baseName.Left(dotPos) : baseName;
-
-            for (int i = 0; i < pageCount; ++i)
-            {
-                if (m_listFiles.HasEntry(path, i)) continue;
-
-                FileEntry entry;
-                entry.srcPath   = path;
-                entry.type      = FileEntry::Type::PdfPage;
-                entry.pageIndex = i;
-                entry.pageTotal = pageCount;
-
-                CString pg;
-                pg.Format(_T(" (p.%d/%d)"), i + 1, pageCount);
-                entry.srcName = baseName + pg;
-
-                CString pageNum;
-                pageNum.Format(_T("%03d"), i + 1);
-                entry.pdfName = stem + _T("_p") + pageNum + _T(".jpg");
-
-                m_listFiles.AddEntry(entry);
-            }
-            continue;
-        }
-
-        // 이미지 파일
-        if (!IsSupportedExt(ext)) continue;
-        if (m_listFiles.HasEntry(path)) continue;
-
-        FileEntry entry;
-        entry.srcPath = path;
-        entry.srcName = PathFindFileName(path);
-        CString srcExt = PathFindExtension(path);
-        entry.pdfName = entry.srcName.Left(
-            entry.srcName.GetLength() - srcExt.GetLength())
-            + _T(".pdf");
-        m_listFiles.AddEntry(entry);
+        m_btnTabPrev.SetFont(pFont);
+        m_btnTabNext.SetFont(pFont);
     }
 
-    UpdateMergeCheckState();
+    m_btnTabPrev.m_nFlatStyle = CMFCButton::BUTTONSTYLE_SEMIFLAT;
+    m_btnTabNext.m_nFlatStyle = CMFCButton::BUTTONSTYLE_SEMIFLAT;
+
+    PositionTabNavButtons();
 }
 
-void CImgToPdfDlg::UpdateMergeCheckState()
+void CImgToPdfDlg::PositionTabNavButtons()
 {
-    const auto& entries = m_listFiles.GetEntries();
-    bool hasPdfPage = std::any_of(entries.begin(), entries.end(),
-        [](const FileEntry& e){ return e.type == FileEntry::Type::PdfPage; });
+    if (!m_tabCtrl.GetSafeHwnd()) return;
+    if (!m_btnTabPrev.GetSafeHwnd()) return;
 
-    m_checkMerge.EnableWindow(!hasPdfPage && !m_bConverting);
-    if (hasPdfPage)
+    CRect rcItem;
+    if (!m_tabCtrl.GetItemRect(0, &rcItem)) return;
+
+    CRect rcTabCtrl;
+    m_tabCtrl.GetWindowRect(&rcTabCtrl);
+    ScreenToClient(&rcTabCtrl);
+
+    const int btnW   = 26;
+    const int btnH   = rcItem.Height();
+    const int gap    = 2;
+    const int right  = rcTabCtrl.right - 4;
+    const int top    = rcTabCtrl.top + rcItem.top;
+
+    CRect rcNext(right - btnW,          top, right,               top + btnH);
+    CRect rcPrev(right - btnW*2 - gap,  top, right - btnW - gap,  top + btnH);
+
+    m_btnTabPrev.MoveWindow(rcPrev);
+    m_btnTabNext.MoveWindow(rcNext);
+}
+
+void CImgToPdfDlg::UpdateTabNavButtons()
+{
+    if (!m_btnTabPrev.GetSafeHwnd()) return;
+    m_btnTabPrev.EnableWindow(m_activeTab > 0);
+    m_btnTabNext.EnableWindow(m_activeTab < m_tabCtrl.GetItemCount() - 1);
+}
+
+// ── tab layout ───────────────────────────────────────────────
+
+void CImgToPdfDlg::RepositionTabDialogs()
+{
+    if (!m_tabCtrl.GetSafeHwnd()) return;
+
+    CRect rcTab;
+    m_tabCtrl.GetWindowRect(&rcTab);
+    ScreenToClient(&rcTab);
+    m_tabCtrl.AdjustRect(FALSE, &rcTab);
+
+    for (int i = 0; i < 5; ++i)
+        if (m_tabDlgs[i] && m_tabDlgs[i]->GetSafeHwnd())
+            m_tabDlgs[i]->MoveWindow(rcTab);
+}
+
+void CImgToPdfDlg::ShowTab(int idx)
+{
+    for (int i = 0; i < 5; ++i)
+        if (m_tabDlgs[i] && m_tabDlgs[i]->GetSafeHwnd())
+            m_tabDlgs[i]->ShowWindow(i == idx ? SW_SHOW : SW_HIDE);
+    m_activeTab = idx;
+    m_tabCtrl.SetCurSel(idx);
+
+    if (m_tabDlgs[idx] && m_tabDlgs[idx]->GetSafeHwnd())
+        m_tabDlgs[idx]->BringWindowToTop();
+
+    UpdateTabNavButtons();
+
+    // notify tab and refresh common controls
+    if (m_editPath.GetSafeHwnd())
+        ActiveTab()->OnTabActivated(m_editPath, m_checkMerge);
+
+    // reset progress display when switching to a non-conversion tab
+    if (m_tabDlgs[idx] != &m_dlgTab1)
     {
-        m_checkMerge.SetCheck(BST_UNCHECKED);
-        m_listFiles.SetMergeMode(false);
+        m_progress.SetPos(0);
+        m_staticProgressTxt.SetIdle();
+    }
+
+    UpdateCommonState();
+}
+
+void CImgToPdfDlg::OnTcnSelchangeTabCtrl(NMHDR*, LRESULT* pResult)
+{
+    ShowTab(m_tabCtrl.GetCurSel());
+    *pResult = 0;
+}
+
+void CImgToPdfDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDIS)
+{
+    if (nIDCtl != IDC_TAB_CTRL) { CDialogEx::OnDrawItem(nIDCtl, lpDIS); return; }
+
+    constexpr COLORREF clrBg     = RGB(248, 249, 252);
+    constexpr COLORREF clrBorder = RGB(180, 185, 200);
+    constexpr COLORREF clrText   = RGB(30,  30,  30);
+
+    CDC dc; dc.Attach(lpDIS->hDC);
+    CRect rc(lpDIS->rcItem);
+    bool bSel = (lpDIS->itemState & ODS_SELECTED) != 0;
+
+    dc.FillSolidRect(rc, clrBg);
+
+    CPen pen(PS_SOLID, 1, clrBorder);
+    CPen* pOldPen = dc.SelectObject(&pen);
+    if (bSel) {
+        dc.MoveTo(rc.left,      rc.bottom);
+        dc.LineTo(rc.left,      rc.top);
+        dc.LineTo(rc.right - 1, rc.top);
+        dc.LineTo(rc.right - 1, rc.bottom);
+    } else {
+        dc.Draw3dRect(rc, clrBorder, clrBorder);
+    }
+    dc.SelectObject(pOldPen);
+
+    TCHAR szText[64] = {};
+    TCITEM ti = {}; ti.mask = TCIF_TEXT; ti.pszText = szText; ti.cchTextMax = 63;
+    m_tabCtrl.GetItem(lpDIS->itemID, &ti);
+
+    dc.SetBkMode(TRANSPARENT);
+    dc.SetTextColor(clrText);
+    CFont* pOldFont = dc.SelectObject(m_tabCtrl.GetFont());
+    dc.DrawText(szText, rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    if (pOldFont) dc.SelectObject(pOldFont);
+
+    dc.Detach();
+}
+
+// ── ◀▶ click → swap ──────────────────────────────────────────
+
+void CImgToPdfDlg::OnBnClickedTabPrev()
+{
+    if (m_activeTab > 0) SwapTabs(m_activeTab, m_activeTab - 1);
+}
+
+void CImgToPdfDlg::OnBnClickedTabNext()
+{
+    if (m_activeTab < m_tabCtrl.GetItemCount() - 1)
+        SwapTabs(m_activeTab, m_activeTab + 1);
+}
+
+void CImgToPdfDlg::SwapTabs(int a, int b)
+{
+    TCHAR bufA[128] = {}, bufB[128] = {};
+    TCITEM tcA = {}; tcA.mask = TCIF_TEXT; tcA.pszText = bufA; tcA.cchTextMax = 128;
+    TCITEM tcB = {}; tcB.mask = TCIF_TEXT; tcB.pszText = bufB; tcB.cchTextMax = 128;
+    m_tabCtrl.GetItem(a, &tcA);
+    m_tabCtrl.GetItem(b, &tcB);
+    m_tabCtrl.SetItem(a, &tcB);
+    m_tabCtrl.SetItem(b, &tcA);
+
+    std::swap(m_tabDlgs[a], m_tabDlgs[b]);
+    ShowTab(b);
+    SaveTabOrder();
+}
+
+// ── registry: tab order ───────────────────────────────────────
+
+void CImgToPdfDlg::SaveTabOrder()
+{
+    CString order;
+    for (int i = 0; i < 5; ++i)
+    {
+        if (i > 0) order += L",";
+        order.AppendFormat(L"%d", GetDlgIndex(m_tabDlgs[i]));
+    }
+    AfxGetApp()->WriteProfileString(L"TabOrder", L"Order", order);
+}
+
+void CImgToPdfDlg::LoadTabOrder()
+{
+    CString s = AfxGetApp()->GetProfileString(L"TabOrder", L"Order", L"0,1,2,3,4");
+
+    int ids[5] = { 0, 1, 2, 3, 4 };
+    if (_stscanf_s(s, L"%d,%d,%d,%d,%d", &ids[0], &ids[1], &ids[2], &ids[3], &ids[4]) != 5) return;
+
+    bool used[5] = {};
+    for (int x : ids)
+        if (x >= 0 && x < 5) used[x] = true;
+    if (!used[0] || !used[1] || !used[2] || !used[3] || !used[4]) return;
+
+    CTabDlgBase* origDlgs[5] = { &m_dlgTab1, &m_dlgTab2, &m_dlgTab3, &m_dlgTab4, &m_dlgTab5 };
+    static const AppStringId labelIds[5] = { IDS_TAB1_LABEL, IDS_TAB2_LABEL, IDS_TAB3_LABEL, IDS_TAB4_LABEL, IDS_TAB5_LABEL };
+
+    for (int i = 0; i < 5; ++i)
+    {
+        m_tabDlgs[i] = origDlgs[ids[i]];
+        CString label = LS(labelIds[ids[i]]);
+        TCITEM tc = {}; tc.mask = TCIF_TEXT;
+        tc.pszText = label.GetBuffer();
+        m_tabCtrl.SetItem(i, &tc);
+        label.ReleaseBuffer();
+    }
+}
+
+int CImgToPdfDlg::GetDlgIndex(CTabDlgBase* pDlg)
+{
+    if (pDlg == &m_dlgTab1) return 0;
+    if (pDlg == &m_dlgTab2) return 1;
+    if (pDlg == &m_dlgTab3) return 2;
+    if (pDlg == &m_dlgTab4) return 3;
+    return 4;
+}
+
+// ── size / constraints ────────────────────────────────────────
+
+void CImgToPdfDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+    lpMMI->ptMinTrackSize.x = 800;
+    lpMMI->ptMinTrackSize.y = 600;
+    CDialogEx::OnGetMinMaxInfo(lpMMI);
+}
+
+void CImgToPdfDlg::OnSize(UINT nType, int cx, int cy)
+{
+    CDialogEx::OnSize(nType, cx, cy);
+    if (nType == SIZE_MINIMIZED || !m_tabCtrl.GetSafeHwnd()) return;
+
+    ResizeCommonControls(cx, cy);
+    PositionTabNavButtons();
+    RepositionTabDialogs();
+}
+
+void CImgToPdfDlg::ResizeCommonControls(int cx, int cy)
+{
+    if (m_initCx == 0) return;
+
+    int dw = cx - m_initCx;
+    int dh = cy - m_initCy;
+
+    auto move = [](CWnd& w, CRect r)
+    {
+        w.MoveWindow(r.left, r.top, r.Width(), r.Height());
+    };
+
+    CRect r;
+    r = m_rcEdit0;    r.right += dw;               move(m_editPath,          r);
+    r = m_rcMerge0;   r.OffsetRect(dw, 0);          move(m_checkMerge,        r);
+    r = m_rcBrowse0;  r.OffsetRect(dw, 0);          move(m_btnBrowse,         r);
+    r = m_rcConvert0; r.OffsetRect(dw, 0);          move(m_btnConvert,        r);
+    r = m_rcProg0;    r.right += dw;                move(m_progress,          r);
+    r = m_rcProgTxt0; r.OffsetRect(dw, 0);          move(m_staticProgressTxt, r);
+    r = m_rcMoveUp0;  r.OffsetRect(dw, 0);          move(m_btnMoveUp,         r);
+    r = m_rcMoveDown0;r.OffsetRect(dw, 0);          move(m_btnMoveDown,       r);
+    r = m_rcClear0;   r.OffsetRect(dw, 0);          move(m_btnClear,          r);
+    r = m_rcTab0;     r.right += dw; r.bottom += dh; move(m_tabCtrl,          r);
+
+    Invalidate();
+}
+
+// ── system menu / F1 help ─────────────────────────────────────
+
+void CImgToPdfDlg::OnSysCommand(UINT nID, LPARAM lParam)
+{
+    if (nID == IDM_HELP_USAGE)
+        ShowHelpDialog();
+    else if (nID == IDM_LANG_TOGGLE)
+    {
+        SetLang(g_lang == Lang::KO ? Lang::EN : Lang::KO);
+        ApplyLanguage();
     }
     else
-    {
-        m_listFiles.SetMergeMode(m_checkMerge.GetCheck() == BST_CHECKED);
-    }
+        CDialogEx::OnSysCommand(nID, lParam);
 }
 
-void CImgToPdfDlg::AddFolder(const CString& folderPath)
+BOOL CImgToPdfDlg::OnHelpInfo(HELPINFO*)
 {
-    CString pattern = folderPath + _T("\\*");
-    WIN32_FIND_DATA fd = {};
-    HANDLE hFind = FindFirstFile(pattern, &fd);
-    if (hFind == INVALID_HANDLE_VALUE) return;
-
-    // RAII: 어떤 경로로 빠져나가도 FindClose 보장
-    struct FindGuard {
-        HANDLE h;
-        ~FindGuard() { FindClose(h); }
-    } guard{ hFind };
-
-    std::vector<CString> found;
-    do
-    {
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
-        CString fullPath = folderPath + _T("\\") + fd.cFileName;
-        CString ext      = PathFindExtension(fd.cFileName);
-        if (IsSupportedExt(ext))
-            found.push_back(fullPath);
-    }
-    while (FindNextFile(hFind, &fd));
-
-    AddFiles(found);
-    if (!found.empty()) m_editPath.SetWindowText(folderPath);
+    ShowHelpDialog();
+    return TRUE;
 }
 
+void CImgToPdfDlg::UpdateLangMenuItem()
+{
+    CMenu* pSysMenu = GetSystemMenu(FALSE);
+    if (!pSysMenu) return;
+    CString menuText = (g_lang == Lang::KO) ? L"Switch to English" : L"\ud55c\uad6d\uc5b4\ub85c \uc804\ud658";
+    pSysMenu->ModifyMenu(IDM_LANG_TOGGLE, MF_BYCOMMAND | MF_STRING,
+                         IDM_LANG_TOGGLE, menuText);
+}
+
+void CImgToPdfDlg::ApplyLanguage()
+{
+    // common controls
+    {
+        CString cue = LS(IDS_CUE_PATH);
+        m_editPath.SendMessage(EM_SETCUEBANNER, FALSE, (LPARAM)(LPCWSTR)cue);
+    }
+    m_toolTip.UpdateTipText(LS(IDS_TIP_EDITPATH),   &m_editPath);
+    m_toolTip.UpdateTipText(LS(IDS_TIP_MERGE),       &m_checkMerge);
+    m_toolTip.UpdateTipText(LS(IDS_TIP_BROWSE),      &m_btnBrowse);
+    m_toolTip.UpdateTipText(LS(IDS_TIP_CONVERT),     &m_btnConvert);
+    m_toolTip.UpdateTipText(LS(IDS_TIP_PROGRESS),    &m_staticProgressTxt);
+    m_toolTip.UpdateTipText(LS(IDS_TIP_MOVEUP),      &m_btnMoveUp);
+    m_toolTip.UpdateTipText(LS(IDS_TIP_MOVEDOWN),    &m_btnMoveDown);
+    m_toolTip.UpdateTipText(LS(IDS_TIP_CLEAR_BASE),  &m_btnClear);
+
+    // tab labels (respecting current order)
+    static const AppStringId labelIds[5] = { IDS_TAB1_LABEL, IDS_TAB2_LABEL, IDS_TAB3_LABEL, IDS_TAB4_LABEL, IDS_TAB5_LABEL };
+    for (int i = 0; i < 5; ++i)
+    {
+        int dlgIdx = GetDlgIndex(m_tabDlgs[i]);
+        CString label = LS(labelIds[dlgIdx]);
+        TCITEM tc = {}; tc.mask = TCIF_TEXT;
+        tc.pszText = label.GetBuffer();
+        m_tabCtrl.SetItem(i, &tc);
+        label.ReleaseBuffer();
+    }
+
+    // each tab
+    for (int i = 0; i < 5; ++i)
+        if (m_tabDlgs[i]) m_tabDlgs[i]->ApplyLanguage();
+
+    // system menu lang item
+    UpdateLangMenuItem();
+
+    // refresh button states (RunLabel may have changed)
+    UpdateCommonState();
+}
+
+void CImgToPdfDlg::ShowHelpDialog()
+{
+    CString msg = LS(IDS_HELP_TEXT);
+    CString cap = LS(IDS_HELP_CAPTION);
+    ::MessageBoxW(GetSafeHwnd(), msg, cap, MB_OK | MB_ICONINFORMATION);
+}
+
+
+// ── close / destroy ───────────────────────────────────────────
+
+void CImgToPdfDlg::OnCancel()
+{
+    m_dlgTab1.Stop();
+    CDialogEx::OnCancel();
+}
+
+void CImgToPdfDlg::OnDestroy()
+{
+    CDialogEx::OnDestroy();
+}

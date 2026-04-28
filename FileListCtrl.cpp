@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "resource.h"
 #include "FileListCtrl.h"
+#include "AppLang.h"
 
 BEGIN_MESSAGE_MAP(CFileListCtrl, CListCtrl)
     ON_NOTIFY_REFLECT(NM_RCLICK,     &CFileListCtrl::OnNMRClick)
@@ -60,9 +61,9 @@ void CFileListCtrl::SetupColumns()
     BuildImageList();
 
     InsertColumn(0, _T(""), LVCFMT_CENTER, 24);
-    InsertColumn(1, _T("원본 파일명"), LVCFMT_LEFT, 160);
-    InsertColumn(2, _T("변환될 파일명"), LVCFMT_LEFT, 160);
-    InsertColumn(3, _T("비고"), LVCFMT_LEFT, 100);
+    InsertColumn(1, LS(IDS_FLC_COL1), LVCFMT_LEFT, 160);
+    InsertColumn(2, LS(IDS_FLC_COL2), LVCFMT_LEFT, 160);
+    InsertColumn(3, LS(IDS_FLC_COL3), LVCFMT_LEFT, 100);
 
     // 초기 컬럼 너비 적용
     CRect rc;
@@ -132,17 +133,17 @@ void CFileListCtrl::SetStatus(int index, FileEntry::Status status)
     switch (status)
     {
     case FileEntry::Status::Success:
-        SetItemText(index, 3, _T("성공"));
+        SetItemText(index, 3, LS(IDS_FLC_STATUS_SUCCESS));
         break;
     case FileEntry::Status::Fail:
     {
         CString failText = m_entries[index].remark.IsEmpty()
-                           ? CString(_T("실패")) : m_entries[index].remark;
+                           ? LS(IDS_FLC_STATUS_FAIL) : m_entries[index].remark;
         SetItemText(index, 3, failText);
         break;
     }
     case FileEntry::Status::Running:
-        SetItemText(index, 3, _T("변환 중..."));
+        SetItemText(index, 3, LS(IDS_FLC_STATUS_RUNNING));
         break;
     default:
         SetItemText(index, 3, _T(""));
@@ -169,7 +170,7 @@ void CFileListCtrl::SetMergeMode(bool bMerge)
         CString srcName = m_entries[0].srcName;
         int dotPos = srcName.ReverseFind(_T('.'));
         CString stem = (dotPos >= 0) ? srcName.Left(dotPos) : srcName;
-        CString mergedName = stem + _T("_통합.pdf");
+        CString mergedName = stem + LS(IDS_FLC_SUFFIX_MERGED);
         m_entries[0].pdfName = mergedName;
         for (int i = 0; i < (int)m_entries.size(); ++i)
             SetItemText(i, 2, mergedName);
@@ -241,10 +242,10 @@ void CFileListCtrl::RefreshRow(int idx)
     CString remark;
     switch (e.status)
     {
-    case FileEntry::Status::Success: remark = _T("성공"); break;
+    case FileEntry::Status::Success: remark = LS(IDS_FLC_STATUS_SUCCESS); break;
     case FileEntry::Status::Fail:
-        remark = e.remark.IsEmpty() ? CString(_T("실패")) : e.remark; break;
-    case FileEntry::Status::Running: remark = _T("변환 중..."); break;
+        remark = e.remark.IsEmpty() ? LS(IDS_FLC_STATUS_FAIL) : e.remark; break;
+    case FileEntry::Status::Running: remark = LS(IDS_FLC_STATUS_RUNNING); break;
     default: break;
     }
     SetItemText(idx, 3, remark);
@@ -301,12 +302,16 @@ void CFileListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CFileListCtrl::OnNMRClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
     NMITEMACTIVATE* pNMIA = reinterpret_cast<NMITEMACTIVATE*>(pNMHDR);
-    if (pNMIA->iItem < 0) { *pResult = 0; return; }
+    int idx = pNMIA->iItem;
+    bool hasItem = (idx >= 0 && idx < (int)m_entries.size());
 
     CMenu menu;
     menu.CreatePopupMenu();
-    menu.AppendMenu(MF_STRING, 1, _T("목록에서 제거"));
-    menu.AppendMenu(MF_STRING, 2, _T("파일 위치 열기"));
+    menu.AppendMenu(hasItem ? MF_STRING : MF_STRING | MF_GRAYED, 1, LS(IDS_FLC_MENU_REMOVE));
+    menu.AppendMenu(hasItem ? MF_STRING : MF_STRING | MF_GRAYED, 2, LS(IDS_FLC_MENU_OPEN_LOC));
+    menu.AppendMenu(hasItem ? MF_STRING : MF_STRING | MF_GRAYED, 4, LS(IDS_FLC_MENU_OPEN));
+    menu.AppendMenu(MF_SEPARATOR, 0, (LPCTSTR)nullptr);
+    menu.AppendMenu(m_entries.empty() ? MF_STRING | MF_GRAYED : MF_STRING, 3, LS(IDS_FLC_MENU_CLEAR_ALL));
 
     CPoint pt;
     GetCursorPos(&pt);
@@ -319,14 +324,21 @@ void CFileListCtrl::OnNMRClick(NMHDR* pNMHDR, LRESULT* pResult)
     }
     else if (cmd == 2)
     {
-        int idx = pNMIA->iItem;
-        if (idx < (int)m_entries.size())
-        {
-            CString path = m_entries[idx].srcPath;
-            ShellExecute(nullptr, _T("explore"),
-                path.Left(path.ReverseFind(_T('\\'))),
-                nullptr, nullptr, SW_SHOWNORMAL);
-        }
+        CString path = m_entries[idx].srcPath;
+        ShellExecute(nullptr, _T("explore"),
+            path.Left(path.ReverseFind(_T('\\'))),
+            nullptr, nullptr, SW_SHOWNORMAL);
+    }
+    else if (cmd == 3)
+    {
+        Clear();
+        CWnd* pParent = GetParent();
+        if (pParent) pParent->PostMessage(WM_LIST_ENTRIES_CHANGED);
+    }
+    else if (cmd == 4)
+    {
+        ShellExecute(nullptr, _T("open"), m_entries[idx].srcPath,
+                     nullptr, nullptr, SW_SHOWNORMAL);
     }
     *pResult = 0;
 }
@@ -366,6 +378,15 @@ void CFileListCtrl::OnNMCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
     }
     }
     *pResult = CDRF_DODEFAULT;
+}
+
+void CFileListCtrl::ApplyLanguage()
+{
+    LVCOLUMN lvc = {};
+    lvc.mask = LVCF_TEXT;
+    CString col1 = LS(IDS_FLC_COL1); lvc.pszText = col1.GetBuffer(); SetColumn(1, &lvc); col1.ReleaseBuffer();
+    CString col2 = LS(IDS_FLC_COL2); lvc.pszText = col2.GetBuffer(); SetColumn(2, &lvc); col2.ReleaseBuffer();
+    CString col3 = LS(IDS_FLC_COL3); lvc.pszText = col3.GetBuffer(); SetColumn(3, &lvc); col3.ReleaseBuffer();
 }
 
 // ── 컬럼 자동 너비 ───────────────────────────────────────────

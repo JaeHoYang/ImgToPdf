@@ -1,0 +1,74 @@
+PROJECT_NAME           = "ImgToPdf"
+PROJECT_NUMBER         = "v2.1"
+PROJECT_BRIEF          = "Image/PDF/Markdown Converter - Windows MFC Desktop App"
+
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+OUTPUT_LANGUAGE        = Korean
+DOXYFILE_ENCODING      = UTF-8
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+
+INPUT                  = .
+FILE_PATTERNS          = *.h *.cpp
+RECURSIVE              = YES
+EXCLUDE                = installer
+EXCLUDE_PATTERNS       = */stb_image* */stb_image_write*
+EXCLUDE_SYMBOLS        =
+
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+STRIP_CODE_COMMENTS    = NO
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE        = LIGHT
+HTML_HEADER            = docs/header.html
+HTML_EXTRA_STYLESHEET  = docs/custom.css
+GENERATE_TREEVIEW      = NO
+TREEVIEW_WIDTH         = 250
+SEARCHENGINE           = NO
+
+GENERATE_HTMLHELP      = YES
+CHM_FILE               = ../ImgToPdf.chm
+HHC_LOCATION           =
+GENERATE_CHI           = NO
+CHM_INDEX_ENCODING     = UTF-8
+BINARY_TOC             = YES
+TOC_EXPAND             = YES
+
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+
+HAVE_DOT               = YES
+DOT_PATH               = C:/Program Files/Graphviz/bin
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_IMAGE_FORMAT       = png
+INTERACTIVE_SVG        = NO
+DOT_GRAPH_MAX_NODES    = 100
+MAX_DOT_GRAPH_DEPTH    = 3
+DOT_MULTI_TARGETS      = YES
+
+SHOW_FILES             = YES
+SHOW_NAMESPACES        = YES
+SHOW_INCLUDE_FILES     = YES
+
+SORT_MEMBER_DOCS       = NO
+SORT_BRIEF_DOCS        = NO
+
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO

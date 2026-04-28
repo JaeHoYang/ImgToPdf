@@ -1,13 +1,17 @@
 #pragma once
 #include "targetver.h"
+#include "AppMessages.h"
 
 #include <afxwin.h>
 #include <afxext.h>
 #include <afxcmn.h>
 #include <afxdlgs.h>
 #include <afxdialogex.h>
+#include <afxbutton.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <uxtheme.h>
+#pragma comment(lib, "uxtheme.lib")
 
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
@@ -29,6 +33,8 @@
 #include <Windows.Data.Pdf.h>
 #include <Windows.Storage.h>
 #include <Windows.Storage.Streams.h>
+#include <Windows.Graphics.Imaging.h>
+#include <Windows.Media.Ocr.h>
 #pragma comment(lib, "runtimeobject.lib")
 #include <shcore.h>
 #pragma comment(lib, "shcore.lib")
