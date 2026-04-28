@@ -335,6 +335,11 @@ ImgToPdf/
 - **jaeho**
 - pim9697@gmail.com
 
+## Development
+
+This project was built with **[Claude](https://claude.ai/code) (Anthropic)** via Vibe Coding,  
+and the source code was reviewed by **[Gemini](https://gemini.google.com) (Google)**.
+
 ---
 
 ## License

@@ -334,6 +334,11 @@ ImgToPdf/
 - **jaeho**
 - pim9697@gmail.com
 
+## 개발 방식
+
+이 프로젝트는 **[Claude](https://claude.ai/code)(Anthropic)** 로 바이브코딩(Vibe Coding)하고,  
+**[Gemini](https://gemini.google.com)(Google)** 로 소스코드를 검수하여 완성했습니다.
+
 ---
 
 ## 라이선스
