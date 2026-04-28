@@ -53,11 +53,14 @@ Name: "applang_en"; Description: "{cm:LangEnglish}"; GroupDescription: "{cm:Lang
 [Files]
 Source: "{#SourceDir}\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
-; ── Visual C++ 2022 런타임 DLL ────────────────────────────────
+; ── Visual C++ 2022 런타임 DLL (빌드 PC에 있으면 자동 포함) ─────
 Source: "{#SourceDir}\mfc142u.dll";         DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#SourceDir}\msvcp140.dll";        DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#SourceDir}\vcruntime140.dll";    DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#SourceDir}\vcruntime140_1.dll";  DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+
+; ── Visual C++ 2022 재배포 패키지 (installer 폴더에 파일 필요) ──
+Source: "VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall skipifsourcedoesntexist
 
 [Registry]
 ; 선택한 앱 언어를 레지스트리에 기록 (0=한국어, 1=English)
@@ -70,6 +73,10 @@ Name: "{group}\{#AppName} Uninstall"; Filename: "{uninstallexe}"; Tasks: startme
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
+Filename: "{tmp}\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; \
+    StatusMsg: "{cm:VCRedistInstalling}"; \
+    Check: VCRedistNeedsInstall; \
+    Flags: waituntilterminated
 Filename: "{app}\{#AppExeName}"; \
     Description: "{cm:LaunchProgram,{#AppName}}"; \
     Flags: nowait postinstall skipifsilent
@@ -78,6 +85,16 @@ Filename: "{app}\{#AppExeName}"; \
 Type: filesandordirs; Name: "{app}"
 
 [Code]
+// ── VC++ 2022 x64 런타임 설치 여부 확인 ─────────────────────────
+function VCRedistNeedsInstall: Boolean;
+var
+  installed: Cardinal;
+begin
+  Result := not (RegQueryDWordValue(HKLM,
+    'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64',
+    'Installed', installed) and (installed = 1));
+end;
+
 // ── 이전 버전 제거 헬퍼 ──────────────────────────────────────────
 function GetUninstallString(): String;
 var
@@ -242,6 +259,7 @@ korean.OllamaInstallSkip=나중에 아래 주소에서 Ollama를 설치하세요
 korean.OllamaInstallDownloadFail=Ollama 설치 파일 다운로드에 실패했습니다.%n인터넷 연결을 확인하거나 아래 주소에서 직접 다운로드하세요:%n  https://ollama.com
 korean.OllamaInstallRunFail=Ollama 설치 프로그램을 실행할 수 없습니다.%n다운로드된 파일을 직접 실행하거나 아래 주소에서 다시 시도하세요:%n  https://ollama.com
 korean.OllamaInstallNotDetected=Ollama 설치가 완료되지 않은 것 같습니다.%n설치를 마친 후 아래 명령으로 모델을 수동으로 받으세요:%n  ollama pull llama3.2:3b
+korean.VCRedistInstalling=Visual C++ 2022 런타임을 설치하는 중...
 
 ; 영어 메시지
 english.ShortcutGroup=Shortcuts:
@@ -261,3 +279,4 @@ english.OllamaInstallSkip=You can install Ollama later from:%n  https://ollama.c
 english.OllamaInstallDownloadFail=Failed to download the Ollama installer.%nCheck your internet connection or download it manually:%n  https://ollama.com
 english.OllamaInstallRunFail=Failed to run the Ollama installer.%nTry running the downloaded file manually or visit:%n  https://ollama.com
 english.OllamaInstallNotDetected=Ollama installation may not have completed.%nAfter finishing setup, pull the model manually:%n  ollama pull llama3.2:3b
+english.VCRedistInstalling=Installing Visual C++ 2022 Runtime...
